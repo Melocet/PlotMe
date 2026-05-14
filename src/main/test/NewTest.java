@@ -1,7 +1,7 @@
 import com.worldcretornica.plotme_core.api.event.Event;
 import com.worldcretornica.plotme_core.api.event.eventbus.EventBus;
 import com.worldcretornica.plotme_core.api.event.eventbus.Subscribe;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class NewTest {
 

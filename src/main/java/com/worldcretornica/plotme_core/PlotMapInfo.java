@@ -1,9 +1,11 @@
 package com.worldcretornica.plotme_core;
 
 import com.worldcretornica.configuration.ConfigAccessor;
+import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 
 import java.util.List;
+import java.util.Locale;
 
 public class PlotMapInfo {
 
@@ -15,25 +17,34 @@ public class PlotMapInfo {
         this.config = config.getConfig().getConfigurationSection("worlds." + world);
     }
 
-    private List<Integer> getProtectedBlocks() {
-        return config.getIntegerList("ProtectedBlocks");
+    private List<String> getProtectedBlocks() {
+        return config.getStringList("ProtectedBlocks");
     }
 
-    public boolean isProtectedBlock(int blockId) {
-        return getProtectedBlocks().contains(blockId);
+    public boolean isProtectedBlock(Material material) {
+        if (material == null) return false;
+        String name = material.name().toUpperCase(Locale.ROOT);
+        for (String entry : getProtectedBlocks()) {
+            if (entry.equalsIgnoreCase(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private List<String> getPreventedItems() {
         return config.getStringList("PreventedItems");
     }
 
-    /**
-     * Returns whether or not this world has the provided item prevented
-     *
-     * @return true if this world has the provided item prevented, false otherwise
-     */
-    public boolean isPreventedItem(String itemId) {
-        return getPreventedItems().contains(itemId);
+    public boolean isPreventedItem(Material material) {
+        if (material == null) return false;
+        String name = material.name().toUpperCase(Locale.ROOT);
+        for (String entry : getPreventedItems()) {
+            if (entry.equalsIgnoreCase(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public int getDaysToExpiration() {

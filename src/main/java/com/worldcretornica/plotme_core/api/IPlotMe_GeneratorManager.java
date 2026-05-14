@@ -3,7 +3,6 @@ package com.worldcretornica.plotme_core.api;
 import com.worldcretornica.plotme_core.Plot;
 import com.worldcretornica.plotme_core.PlotId;
 import com.worldcretornica.plotme_core.utils.ClearEntry;
-import com.worldcretornica.schematic.Schematic;
 
 import java.util.List;
 
@@ -62,8 +61,6 @@ public interface IPlotMe_GeneratorManager {
     int getGroundHeight();
 
     Vector getPlotMiddle(PlotId id);
-
-    Schematic getPlotSchematic(PlotId id);
 
     void setBiome(PlotId id, String biome);
 }

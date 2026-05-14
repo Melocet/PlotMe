@@ -1,13 +1,13 @@
 name: PlotMe
 main: com.worldcretornica.plotme_core.bukkit.PlotMe_CorePlugin
-version: 0.17.5-BETA
-author: ZachBora
-authors: [MattBDev]
-website: http://worldcretornica.github.io/PlotMe-Core/
+version: ${project.version}
+api-version: '1.21'
+authors: [Melocet, ZachBora, MattBDev]
+website: https://github.com/Melocet/PlotMe-Core
 load: STARTUP
+loadbefore: [Multiverse-Core, MultiWorld]
 softdepend: [Vault, WorldEdit]
-description: >
-             Handles plot management and protection
+description: Plot management + default plot-world generator (modernized for Paper 1.21+).
 commands:
     plotme:
       description: List PlotMe commands

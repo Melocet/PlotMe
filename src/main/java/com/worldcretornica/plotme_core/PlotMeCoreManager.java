@@ -1,7 +1,8 @@
 package com.worldcretornica.plotme_core;
 
-import com.griefcraft.lwc.LWC;
-import com.griefcraft.model.Protection;
+// LWC integration removed during modernization — the LWC project is no
+// longer maintained for modern Paper. If you want chest protection cleanup
+// on plot reset, reintroduce as a separate listener hook.
 import com.worldcretornica.plotme_core.api.ICommandSender;
 import com.worldcretornica.plotme_core.api.IEntity;
 import com.worldcretornica.plotme_core.api.IOfflinePlayer;
@@ -511,25 +512,11 @@ public class PlotMeCoreManager {
     }
 
     /**
-     * Remove any LWC Data that may be on the plot.
+     * No-op: LWC integration was removed during modernization.
+     * Left for source-compat; callers can stay unchanged.
      */
     public void removeLWC(final Plot plot) {
-        final int x1 = plot.getBottomX();
-        final int z1 = plot.getBottomZ();
-        final int x2 = plot.getTopX();
-        final int z2 = plot.getBottomZ();
-
-        plugin.getServerBridge().runTaskAsynchronously(new Runnable() {
-            @Override
-            public void run() {
-                LWC lwc = LWC.getInstance();
-                List<Protection> protections = lwc.getPhysicalDatabase().loadProtections(plot.getWorld().getName(), x1, x2, 0, 256, z1, z2);
-
-                for (Protection protection : protections) {
-                    protection.remove();
-                }
-            }
-        });
+        // intentionally empty
     }
 
     /**
@@ -539,9 +526,7 @@ public class PlotMeCoreManager {
      * @param reason The reason they will be cleared. The cause can be: EXPIRED, RESET, CLEAR
      */
     public void clear(Plot plot, ICommandSender sender, ClearReason reason) {
-        if (plugin.getServerBridge().isUsingLwc()) {
-            removeLWC(plot);
-        }
+        // LWC integration removed; no-op preserved on removeLWC().
         getGenManager(plot.getWorld()).clearEntities(plot.getPlotBottomLoc(), plot.getPlotTopLoc());
         if (reason.equals(ClearReason.Clear)) {
             adjustWall(plot, true);

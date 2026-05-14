@@ -8,6 +8,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.data.BlockData;
 
 public class BukkitBlock implements IBlock {
 
@@ -15,6 +16,10 @@ public class BukkitBlock implements IBlock {
 
     public BukkitBlock(Block block) {
         this.block = block;
+    }
+
+    public Block getHandle() {
+        return block;
     }
 
     @Override
@@ -42,73 +47,44 @@ public class BukkitBlock implements IBlock {
         return block.getZ();
     }
 
-    @Deprecated
-    @SuppressWarnings("deprecation")
-    @Override
-    public int getTypeId() {
-        return block.getTypeId();
-    }
-
-    @Deprecated
     @Override
     public String getBiome() {
-
         return block.getBiome().toString();
     }
 
-    @Deprecated
     @Override
-    public void setBiome(Biome plains) {
-        block.setBiome(plains);
+    public void setBiome(Biome biome) {
+        block.setBiome(biome);
     }
 
-    @Deprecated
-    @SuppressWarnings("deprecation")
-    @Override
-    public boolean setTypeIdAndData(short id, byte data, boolean applyPhysics) {
-        return block.setTypeIdAndData(id, data, applyPhysics);
-    }
-
-    @Deprecated
-    @SuppressWarnings("deprecation")
-    @Override
-    public byte getData() {
-        return block.getData();
-    }
-
-    @Deprecated
-    @SuppressWarnings("deprecation")
-    @Override
-    public void setTypeId(int id, boolean applyPhysics) {
-        block.setTypeId(id, applyPhysics);
-    }
-
-    @Deprecated
-    @Override
-    public void setType(Material material, boolean applyPhyics) {
-        block.setType(material, applyPhyics);
-    }
-
-    @Deprecated
     @Override
     public Material getType() {
         return block.getType();
     }
 
-    @Deprecated
+    @Override
+    public void setType(Material material, boolean applyPhysics) {
+        block.setType(material, applyPhysics);
+    }
+
+    @Override
+    public BlockData getBlockData() {
+        return block.getBlockData();
+    }
+
+    @Override
+    public void setBlockData(BlockData data, boolean applyPhysics) {
+        block.setBlockData(data, applyPhysics);
+    }
+
     @Override
     public BlockState getState() {
         return block.getState();
     }
 
     @Override
-    public void setData(byte b, boolean b1) {
-        block.setData(b, b1);
-    }
-
-    @Override
     public String toString() {
-        return "Bukkit Block: " + getTypeId() + ":" + getData();
+        return "BukkitBlock{" + block.getType() + " @ " + getX() + "," + getY() + "," + getZ() + "}";
     }
 
     public Vector getPosition() {

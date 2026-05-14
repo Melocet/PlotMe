@@ -6,7 +6,6 @@ import com.worldcretornica.plotme_core.api.IPlotMe_GeneratorManager;
 import com.worldcretornica.plotme_core.api.IServerBridge;
 import com.worldcretornica.plotme_core.api.IWorld;
 import com.worldcretornica.plotme_core.api.event.eventbus.EventBus;
-import com.worldcretornica.plotme_core.bukkit.SchematicUtil;
 import com.worldcretornica.plotme_core.storage.Database;
 import com.worldcretornica.plotme_core.storage.MySQLConnector;
 import com.worldcretornica.plotme_core.storage.SQLiteConnector;
@@ -24,7 +23,6 @@ import java.util.logging.Logger;
 
 public class PlotMe_Core {
 
-    private final AbstractSchematicUtil schematicutil = new SchematicUtil(this);
     private final HashMap<IWorld, IPlotMe_GeneratorManager> managers = new HashMap<>();
     //Spool stuff
     //private final ConcurrentLinkedQueue<PlotToClear> plotsToClear = new ConcurrentLinkedQueue<>();
@@ -43,10 +41,6 @@ public class PlotMe_Core {
 
     public IPlotMe_GeneratorManager getGenManager(IWorld world) {
         return managers.get(world);
-    }
-
-    public AbstractSchematicUtil getSchematicUtil() {
-        return this.schematicutil;
     }
 
     public void registerServerBridge(IServerBridge bridge) {

@@ -255,8 +255,9 @@ public class BukkitPlotListener implements Listener {
                     if (member.get().equals(Plot.AccessLevel.TRUSTED)) {
                         if (!api.getServerBridge().getOfflinePlayer(plot.getOwnerId())
                                 .isOnline()) {
-                            if (event.hasBlock() && pmi.isProtectedBlock(event.getClickedBlock().getTypeId())) {
-                                if (!player.hasPermission("plotme.unblock." + event.getClickedBlock().getTypeId())) {
+                            if (event.hasBlock() && pmi.isProtectedBlock(event.getClickedBlock().getType())) {
+                                Material clicked = event.getClickedBlock().getType();
+                                if (!player.hasPermission("plotme.unblock." + clicked.name())) {
                                     player.sendMessage(api.C("CannotBuild"));
                                     event.setCancelled(true);
                                     return;
@@ -264,9 +265,9 @@ public class BukkitPlotListener implements Listener {
                                     return;
                                 }
                             }
-                            if (event.hasItem() && (pmi.isPreventedItem(String.valueOf(event.getItem().getTypeId())) || pmi
-                                    .isPreventedItem(event.getItem().getTypeId() + ":" + event.getItem().getData()))) {
-                                if (!player.hasPermission("plotme.unblock." + event.getClickedBlock().getTypeId())) {
+                            if (event.hasItem() && pmi.isPreventedItem(event.getItem().getType())) {
+                                Material clicked = event.getClickedBlock().getType();
+                                if (!player.hasPermission("plotme.unblock." + clicked.name())) {
                                     player.sendMessage(api.C("CannotBuild"));
                                     event.setCancelled(true);
                                 }
@@ -275,8 +276,9 @@ public class BukkitPlotListener implements Listener {
                         }
                     }
                 } else {
-                    if (event.hasBlock() && pmi.isProtectedBlock(event.getClickedBlock().getTypeId())) {
-                        if (player.hasPermission("plotme.unblock." + event.getClickedBlock().getTypeId())) {
+                    if (event.hasBlock() && pmi.isProtectedBlock(event.getClickedBlock().getType())) {
+                        Material clicked = event.getClickedBlock().getType();
+                        if (player.hasPermission("plotme.unblock." + clicked.name())) {
                             return;
                         } else {
                             player.sendMessage(api.C("CannotBuild"));
@@ -284,9 +286,9 @@ public class BukkitPlotListener implements Listener {
                             return;
                         }
                     }
-                    if (event.hasItem() && (pmi.isPreventedItem(String.valueOf(event.getItem().getTypeId())) || pmi.isPreventedItem(
-                            event.getItem().getTypeId() + ":" + event.getItem().getData()))) {
-                        if (!player.hasPermission("plotme.unblock." + event.getClickedBlock().getTypeId())) {
+                    if (event.hasItem() && pmi.isPreventedItem(event.getItem().getType())) {
+                        Material clicked = event.getClickedBlock().getType();
+                        if (!player.hasPermission("plotme.unblock." + clicked.name())) {
                             player.sendMessage(api.C("CannotBuild"));
                             event.setCancelled(true);
                         }

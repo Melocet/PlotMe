@@ -43,7 +43,7 @@ public class ChunkEntry {
                     if (!contains) {
                         BukkitBlock block = ((BukkitBlock) materials[index]);
                         BukkitBlock blockAt = (BukkitBlock) world.getBlockAt(pt);
-                        blockAt.setTypeIdAndData((short) block.getTypeId(), block.getData(), false);
+                        blockAt.setBlockData(block.getBlockData(), false);
                         if (block.getState() instanceof InventoryHolder) {
                             if (blockAt.getState() instanceof InventoryHolder) {
                                 ((InventoryHolder) blockAt.getState()).getInventory()

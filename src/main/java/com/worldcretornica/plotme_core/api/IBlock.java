@@ -3,6 +3,7 @@ package com.worldcretornica.plotme_core.api;
 import org.bukkit.Material;
 import org.bukkit.block.Biome;
 import org.bukkit.block.BlockState;
+import org.bukkit.block.data.BlockData;
 
 public interface IBlock {
 
@@ -16,31 +17,17 @@ public interface IBlock {
 
     int getZ();
 
-    @Deprecated
-    int getTypeId();
-
-    @Deprecated
     String getBiome();
 
-    @Deprecated
     void setBiome(Biome plains);
 
-    @Deprecated
-    boolean setTypeIdAndData(short id, byte data, boolean applyPhysics);
-
-    byte getData();
-
-    @Deprecated
-    void setTypeId(int id, boolean applyPhysics);
-
-    @Deprecated
-    void setType(Material material, boolean applyPhyics);
-
-    @Deprecated
     Material getType();
 
-    @Deprecated
-    BlockState getState();
+    void setType(Material material, boolean applyPhysics);
 
-    void setData(byte b, boolean b1);
+    BlockData getBlockData();
+
+    void setBlockData(BlockData data, boolean applyPhysics);
+
+    BlockState getState();
 }

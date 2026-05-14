@@ -1,5 +1,8 @@
 package com.worldcretornica.plotme_core.bukkit;
 
+import com.worldcretornica.plotme.defaultgenerator.DefaultChunkGenerator;
+import com.worldcretornica.plotme.defaultgenerator.DefaultPlotManager;
+import com.worldcretornica.plotme.defaultgenerator.DefaultWorldConfigPath;
 import com.worldcretornica.plotme_core.PlotMeCoreManager;
 import com.worldcretornica.plotme_core.PlotMe_Core;
 import com.worldcretornica.plotme_core.api.IEntity;
@@ -9,20 +12,27 @@ import com.worldcretornica.plotme_core.api.IServerBridge;
 import com.worldcretornica.plotme_core.api.IWorld;
 import com.worldcretornica.plotme_core.bukkit.api.BukkitEntity;
 import com.worldcretornica.plotme_core.bukkit.api.BukkitPlayer;
+import com.worldcretornica.plotme_core.bukkit.api.BukkitWorld;
 import com.worldcretornica.plotme_core.bukkit.listener.BukkitPlotDenyListener;
 import com.worldcretornica.plotme_core.bukkit.listener.BukkitPlotListener;
+import org.bstats.bukkit.Metrics;
+import org.bstats.charts.SingleLineChart;
+import org.bukkit.World;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.world.WorldInitEvent;
+import org.bukkit.event.world.WorldLoadEvent;
+import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.mcstats.Metrics;
-import org.mcstats.Metrics.Graph;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.UUID;
 
-public class PlotMe_CorePlugin extends JavaPlugin {
+public class PlotMe_CorePlugin extends JavaPlugin implements Listener {
 
     private static PlotMe_CorePlugin INSTANCE;
     private final HashMap<UUID, BukkitPlayer> bukkitPlayerMap = new HashMap<>();
@@ -53,9 +63,63 @@ public class PlotMe_CorePlugin extends JavaPlugin {
         BukkitPlotListener listener = new BukkitPlotListener(this);
         pm.registerEvents(listener, this);
         pm.registerEvents(new BukkitPlotDenyListener(this), this);
+        pm.registerEvents(this, this);
         plotme.getEventBus().register(listener);
         //Register Command
         this.getCommand("plotme").setExecutor(new BukkitCommand(this));
+
+        // Re-register any worlds that were already loaded before this plugin
+        // initialised (Multiverse/MultiWorld may finish world load on STARTUP
+        // before our onEnable runs).
+        for (World w : getServer().getWorlds()) {
+            if (w.getGenerator() instanceof DefaultChunkGenerator) {
+                registerPlotWorld(w);
+            }
+        }
+    }
+
+    @Override
+    public ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {
+        ConfigurationSection wgc = ensureWorldConfig(worldName);
+        return new DefaultChunkGenerator(wgc);
+    }
+
+    @EventHandler
+    public void onWorldInit(WorldInitEvent event) {
+        if (event.getWorld().getGenerator() instanceof DefaultChunkGenerator) {
+            registerPlotWorld(event.getWorld());
+        }
+    }
+
+    @EventHandler
+    public void onWorldLoad(WorldLoadEvent event) {
+        if (event.getWorld().getGenerator() instanceof DefaultChunkGenerator) {
+            registerPlotWorld(event.getWorld());
+        }
+    }
+
+    private void registerPlotWorld(World w) {
+        BukkitWorld bw = new BukkitWorld(w);
+        if (plotme.getGenManager(bw) != null) {
+            return; // already registered
+        }
+        ConfigurationSection wgc = ensureWorldConfig(w.getName());
+        getLogger().info("Registering PlotMe world: " + w.getName());
+        plotme.addManager(bw, new DefaultPlotManager(wgc, bw));
+    }
+
+    private ConfigurationSection ensureWorldConfig(String worldName) {
+        String key = "worlds." + worldName.toLowerCase();
+        ConfigurationSection wgc = plotme.getConfig().getConfigurationSection(key);
+        if (wgc == null) {
+            wgc = plotme.getConfig().createSection(key);
+        }
+        for (DefaultWorldConfigPath p : DefaultWorldConfigPath.values()) {
+            if (!wgc.contains(p.key())) {
+                wgc.set(p.key(), p.value());
+            }
+        }
+        return wgc;
     }
 
     public PlotMe_Core getAPI() {
@@ -66,55 +130,30 @@ public class PlotMe_CorePlugin extends JavaPlugin {
         return serverObjectBuilder;
     }
 
-    /**
-     * Metrics
-     */
     private void doMetric() {
-        try {
-            Metrics metrics = new Metrics(this);
-            final PlotMeCoreManager manager = PlotMeCoreManager.getInstance();
+        // bStats plugin ID for PlotMe-Core (modern fork).
+        Metrics metrics = new Metrics(this, 24000);
+        final PlotMeCoreManager manager = PlotMeCoreManager.getInstance();
 
-            Graph graphNbWorlds = metrics.createGraph("PlotWorlds");
+        metrics.addCustomChart(new SingleLineChart("plotworlds",
+                () -> manager.getPlotMaps().size()));
 
-            graphNbWorlds.addPlotter(new Metrics.Plotter("Number of PlotWorlds") {
-                @Override
-                public int getValue() {
-                    return manager.getPlotMaps().size();
+        metrics.addCustomChart(new SingleLineChart("average_plot_size", () -> {
+            if (manager.getPlotMaps().isEmpty()) {
+                return 0;
+            }
+            int totalPlotSize = 0;
+            for (IWorld plotter : manager.getPlotMaps().keySet()) {
+                IPlotMe_GeneratorManager genmanager = plotme.getGenManager(plotter);
+                if (genmanager != null) {
+                    totalPlotSize += genmanager.getPlotSize();
                 }
-            });
+            }
+            return totalPlotSize / manager.getPlotMaps().size();
+        }));
 
-            graphNbWorlds.addPlotter(new Metrics.Plotter("Average Plot Size") {
-                @Override
-                public int getValue() {
-
-                    if (!manager.getPlotMaps().isEmpty()) {
-                        int totalPlotSize = 0;
-
-                        for (IWorld plotter : manager.getPlotMaps().keySet()) {
-                            IPlotMe_GeneratorManager genmanager = plotme.getGenManager(plotter);
-                            if (genmanager != null) {
-                                totalPlotSize += genmanager.getPlotSize();
-                            }
-                        }
-
-                        return totalPlotSize / manager.getPlotMaps().size();
-                    } else {
-                        return 0;
-                    }
-                }
-            });
-
-            graphNbWorlds.addPlotter(new Metrics.Plotter("Number of plots") {
-                @Override
-                public int getValue() {
-                    return getAPI().getSqlManager().getTotalPlotCount();
-                }
-            });
-
-            metrics.start();
-        } catch (IOException e) {
-            // Failed to submit the stats :-(
-        }
+        metrics.addCustomChart(new SingleLineChart("number_of_plots",
+                () -> getAPI().getSqlManager().getTotalPlotCount()));
     }
 
 
