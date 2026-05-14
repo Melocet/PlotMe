@@ -202,8 +202,11 @@ public class DefaultPlotManager extends AbstractGenManager {
         clearEntities(bottom, top);
         World w = ((BukkitWorld) world).getWorld();
         int minY = w.getMinHeight();
-        int maxY = w.getMaxHeight();
-        int height = maxY - minY;
+
+        BlockData fillBlock = MaterialParser.parseBlockData(
+                wgc.getString(DefaultWorldConfigPath.FILL_BLOCK.key(), "3"));
+        BlockData plotFloorBlock = MaterialParser.parseBlockData(
+                wgc.getString(DefaultWorldConfigPath.PLOT_FLOOR_BLOCK.key(), "2"));
 
         Set<ChunkCoords> chunks = new HashSet<>();
         for (int x = bottom.getBlockX(); x <= top.getBlockX(); ++x) {
@@ -212,18 +215,9 @@ public class DefaultPlotManager extends AbstractGenManager {
             }
         }
         for (ChunkCoords chunk : chunks) {
-            IBlock[] materials = new IBlock[16 * height * 16];
             Vector min = new Vector(chunk.getX() << 4, minY, chunk.getZ() << 4);
-            for (int x = 0; x < 16; ++x) {
-                for (int y = 0; y < height; ++y) {
-                    for (int z = 0; z < 16; ++z) {
-                        Vector pt = min.add(x, y, z);
-                        int index = y * 16 * 16 + z * 16 + x;
-                        materials[index] = world.getBlockAt(pt);
-                    }
-                }
-            }
-            entry.chunkqueue.add(new ChunkEntry(chunk, materials, entry, min));
+            entry.chunkqueue.add(new ChunkEntry(chunk, entry, min,
+                    fillBlock, plotFloorBlock, getGroundHeight()));
         }
     }
 

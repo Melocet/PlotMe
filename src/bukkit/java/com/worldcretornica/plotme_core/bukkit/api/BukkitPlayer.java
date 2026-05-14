@@ -77,7 +77,9 @@ public class BukkitPlayer extends BukkitOfflinePlayer implements IPlayer {
 
     @Override
     public void remove() {
-        player.remove();
+        // Players cannot be removed via Entity#remove() in modern Paper — it
+        // throws UnsupportedOperationException. Plot operations should never
+        // be removing the player anyway, so this is intentionally a no-op.
     }
 
     @Override

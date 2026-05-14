@@ -37,6 +37,9 @@ public class BukkitUtil {
 
     public static IEntity adapt(org.bukkit.entity.Entity entity) {
         checkNotNull(entity);
+        if (entity instanceof org.bukkit.entity.Player p) {
+            return PlotMe_CorePlugin.getInstance().wrapPlayer(p);
+        }
         return new BukkitEntity(entity);
     }
 

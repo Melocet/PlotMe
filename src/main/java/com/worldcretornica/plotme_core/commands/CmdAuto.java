@@ -78,12 +78,12 @@ public class CmdAuto extends PlotCommand {
                                         plugin.getServerBridge().runTask(new Runnable() {
                                             @Override public void run() {
                                                 manager.createPlot(id, world, name, uuid, pmi);
+                                                // Teleport must run on the main thread — Paper rejects
+                                                // PlayerTeleportEvent from async scheduler workers.
+                                                player.teleport(manager.getPlotHome(id, world), plugin);
+                                                player.sendMessage(C("MsgThisPlotYours") + " " + C("WordUse") + " /plotme home" + " " + C("MsgToGetToIt"));
                                             }
                                         });
-
-                                        player.teleport(manager.getPlotHome(id, world), plugin);
-
-                                        player.sendMessage(C("MsgThisPlotYours") + " " + C("WordUse") + " /plotme home" + " " + C("MsgToGetToIt"));
                                         break loop;
                                     }
                                 }

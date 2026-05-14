@@ -3,58 +3,76 @@ package com.worldcretornica.plotme_core.utils;
 import com.worldcretornica.plotme_core.api.IBlock;
 import com.worldcretornica.plotme_core.api.IWorld;
 import com.worldcretornica.plotme_core.api.Vector;
-import com.worldcretornica.plotme_core.bukkit.api.BukkitBlock;
 import com.worldcretornica.plotme_core.bukkit.api.BukkitWorld;
-import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.Material;
+import org.bukkit.block.data.BlockData;
 
+/**
+ * One chunk's worth of plot-clear work, scheduled via PlotMeSpool so that
+ * large plots don't lag a single tick. Per chunk we reset every block
+ * inside the plot's interior to the generator's default pattern (fill
+ * below the road, plot floor at road height, air above). Border blocks
+ * — walls and neighbour-plot edges — are left untouched.
+ *
+ * Note: the original implementation called World#regenerateChunk and then
+ * restored a snapshot of the border blocks. Paper 1.21 dropped support
+ * for regenerateChunk (throws UnsupportedOperationException), so this
+ * class now does a direct, bounded reset instead.
+ */
 public class ChunkEntry {
 
     private final ChunkCoords chunk;
-    private final IBlock[] materials;
     private final IWorld world;
     private final Vector min;
     private final Vector bottom;
     private final Vector top;
 
-    public ChunkEntry(ChunkCoords chunk, IBlock[] materials, ClearEntry entry, Vector min) {
+    private final BlockData fillBlock;
+    private final BlockData plotFloorBlock;
+    private final int roadHeight;
+
+    public ChunkEntry(ChunkCoords chunk, ClearEntry entry, Vector min,
+                      BlockData fillBlock, BlockData plotFloorBlock, int roadHeight) {
         this.chunk = chunk;
-        this.materials = materials;
         this.world = entry.getPlot().getWorld();
         this.min = min;
         this.bottom = entry.getPlot().getPlotBottomLoc();
         this.top = entry.getPlot().getPlotTopLoc();
-
+        this.fillBlock = fillBlock;
+        this.plotFloorBlock = plotFloorBlock;
+        this.roadHeight = roadHeight;
     }
 
     public void run() {
-        ((BukkitWorld) world).getWorld().regenerateChunk(chunk.getX(), chunk.getZ());
-        for (int x = 0; x < 16; ++x) {
-            for (int y = 0; y < 256; ++y) {
-                for (int z = 0; z < 16; ++z) {
-                    Vector pt = min.add(x, y, z);
-                    int index = y * 256 + z * 16 + x;
-                    int lowestX = Math.min(bottom.getBlockX() + 1, top.getBlockX() - 1);
-                    int highestX = Math.max(bottom.getBlockX() + 1, top.getBlockX() - 1);
-                    int lowestZ = Math.min(bottom.getBlockZ() - 1, top.getBlockZ() + 1);
-                    int highestZ = Math.max(bottom.getBlockZ() - 1, top.getBlockZ() + 1);
+        org.bukkit.World w = ((BukkitWorld) world).getWorld();
+        int minY = w.getMinHeight();
+        int maxY = w.getMaxHeight();
+        BlockData air = Material.AIR.createBlockData();
 
-                    boolean contains =
-                            pt.getBlockX() >= lowestX && pt.getBlockX() <= highestX && pt.getBlockZ() >= lowestZ && pt.getBlockZ() <= highestZ;
-                    if (!contains) {
-                        BukkitBlock block = ((BukkitBlock) materials[index]);
-                        BukkitBlock blockAt = (BukkitBlock) world.getBlockAt(pt);
-                        blockAt.setBlockData(block.getBlockData(), false);
-                        if (block.getState() instanceof InventoryHolder) {
-                            if (blockAt.getState() instanceof InventoryHolder) {
-                                ((InventoryHolder) blockAt.getState()).getInventory()
-                                        .setContents(((InventoryHolder) block.getState()).getInventory().getContents());
-                            }
-                        }
+        int interiorMinX = bottom.getBlockX();
+        int interiorMaxX = top.getBlockX();
+        int interiorMinZ = bottom.getBlockZ();
+        int interiorMaxZ = top.getBlockZ();
+
+        for (int dx = 0; dx < 16; ++dx) {
+            int wx = min.getBlockX() + dx;
+            if (wx < interiorMinX || wx > interiorMaxX) continue;
+            for (int dz = 0; dz < 16; ++dz) {
+                int wz = min.getBlockZ() + dz;
+                if (wz < interiorMinZ || wz > interiorMaxZ) continue;
+                for (int y = minY + 1; y < maxY; ++y) {
+                    IBlock blockAt = world.getBlockAt(new Vector(wx, y, wz));
+                    if (y > roadHeight) {
+                        blockAt.setBlockData(air, false);
+                    } else if (y == roadHeight) {
+                        blockAt.setBlockData(plotFloorBlock, false);
+                    } else {
+                        blockAt.setBlockData(fillBlock, false);
                     }
                 }
             }
         }
-        world.refreshChunk(chunk.getX(), chunk.getZ());
 
+        world.refreshChunk(chunk.getX(), chunk.getZ());
     }
 }
