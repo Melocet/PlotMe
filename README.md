@@ -63,15 +63,6 @@ Key config flags (`plugins/PlotMe/config.yml`)
 - `webmap.bluemap` / `webmap.squaremap` — enable/disable web-map markers
   independently. `marker-color` is the hex RGB fill.
 
-Building
---------
-```
-mvn clean package
-```
-Java 21 + Maven 3.6+. Output: `target/PlotMe-Core.jar` (uber-jar, bStats
-shaded). The Maven artifact name will be renamed to `PlotMe.jar` in a
-future release.
-
 License
 -------
 GPL-3.0, same as the upstream project.
