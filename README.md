@@ -1,21 +1,26 @@
-PlotMe-Core
-===========
+PlotMe
+======
 
-Plot management plugin for Paper 1.21+. This is a maintenance fork of the
-abandoned WorldCretornica/PlotMe-Core, modernized for current Minecraft and
-merged with the (also abandoned) PlotMe-DefaultGenerator so the whole plot
-system ships as a single jar.
+Plot management plugin for Paper 1.21+. Maintenance fork of the abandoned
+WorldCretornica/PlotMe-Core, modernized for current Minecraft and merged
+with the (also abandoned) PlotMe-DefaultGenerator so the whole plot system
+ships as a single jar.
 
-Status: **v1.0.2** — Paper 1.21.4 / Java 21. See [Releases](https://github.com/Melocet/PlotMe-Core/releases) for the full changelog.
+Status: **v1.0.2** — Paper 1.21.4 / Java 21. See [Releases](https://github.com/Melocet/PlotMe/releases) for the full changelog.
 
-What's in the jar
------------------
-- All original `/plotme` commands and permissions, behavior preserved
-- Built-in plot-world generator (no separate companion plugin needed)
+Features
+--------
+- All original `/plotme` commands + permissions, behavior preserved
+- Built-in plot-world generator (no companion plugin needed)
 - Chest-GUI menu (`/plotme menu`) with a Biome page
 - Manual plot merging with configurable cluster cap + permission tiers
+- `/plotme dispose` restores the road grid with exact chunk-gen pattern parity
 - Per-plot flag system (`/plotme flag <name> [value]`)
-- Web-map markers for **BlueMap** and **squaremap** (auto-disabled when the backing plugin isn't installed)
+- Web-map markers for **BlueMap** and **squaremap** (facade pattern — both
+  hooks auto-disable cleanly when the backing plugin isn't installed)
+- Colorized chat with `[PlotMe]` prefix; legacy plain-text mode via
+  `use-legacy-texts: true`
+- Colored Adventure signs on claimed and merged plots
 - bStats metrics, shaded under `com.worldcretornica.plotme_core.libs.bstats`
 
 Optional integrations (soft-deps)
@@ -24,11 +29,13 @@ Optional integrations (soft-deps)
 - **WorldEdit 7** — WE-anywhere permission + per-plot edit restriction
 - **BlueMap** — plot markers on the BlueMap web frontend
 - **squaremap** — plot markers on the squaremap web frontend
+- **Multiverse-Core** — easy plot-world creation
 
 Setup
 -----
-1. Drop `PlotMe-Core.jar` into `plugins/` and start the server once so the
-   default config is written. Stop the server.
+1. Drop the jar from the [latest release](https://github.com/Melocet/PlotMe/releases/latest)
+   into `plugins/` and start the server once so the default config is written.
+   Stop the server.
 2. Create a plot world. With Multiverse-Core:
    ```
    /mv create plots normal -g PlotMe
@@ -48,9 +55,9 @@ Block keys in `worlds.<world>` accept either modern Material names
 Key config flags (`plugins/PlotMe/config.yml`)
 ----------------------------------------------
 - `use-legacy-texts: false` — when `true`, strips color codes and uses a plain
-  `[PlotMe]` chat prefix; when `false` (default) chat is colorized.
+  `[PlotMe] ` chat prefix; when `false` (default) chat is colorized.
 - `merge-enabled: true` — master switch for `/plotme merge`.
-- `merge-max: 4` — maximum plots per cluster. Tiered permissions:
+- `merge-max: 4` — max plots per cluster. Tiered permissions:
   `plotme.merge.limit.4 / 6 / 9 / 16 / *`.
 - `mergeCost: 100.0` — Vault price per merge when economy is enabled.
 - `webmap.bluemap` / `webmap.squaremap` — enable/disable web-map markers
@@ -62,7 +69,8 @@ Building
 mvn clean package
 ```
 Java 21 + Maven 3.6+. Output: `target/PlotMe-Core.jar` (uber-jar, bStats
-shaded).
+shaded). The Maven artifact name will be renamed to `PlotMe.jar` in a
+future release.
 
 License
 -------
