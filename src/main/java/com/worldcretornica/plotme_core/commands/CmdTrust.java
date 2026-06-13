@@ -45,7 +45,7 @@ public class CmdTrust extends PlotCommand {
                         if (serverBridge.getPlayer(args[1]) != null) {
                             allowed = serverBridge.getPlayer(args[1]).getUniqueId().toString();
                         } else {
-                            player.sendMessage(args[1] + " was not found. Are they online?");
+                            player.sendMessage("§b" + args[1] + "§c was not found. Are they online?");
                             return true;
                         }
                     }
@@ -59,15 +59,15 @@ public class CmdTrust extends PlotCommand {
                             if (manager.isEconomyEnabled(pmi)) {
                                 price = pmi.getAddPlayerPrice();
 
-                                if (serverBridge.has(player, pmi.getAddPlayerPrice())) {
-                                    player.sendMessage("It costs " + serverBridge.getEconomy().get().format(price) + " to add a player to "
+                                if (!serverBridge.has(player, pmi.getAddPlayerPrice())) {
+                                    player.sendMessage("§eIt costs §b" + serverBridge.getEconomy().get().format(price) + "§e to add a player to "
                                             + "the plot.");
                                     return true;
                                 } else if (!event.isCancelled()) {
                                     EconomyResponse er = serverBridge.withdrawPlayer(player, price);
 
                                     if (!er.transactionSuccess()) {
-                                        player.sendMessage(er.errorMessage);
+                                        player.sendMessage("§c" + er.errorMessage);
                                         serverBridge.getLogger().warning(er.errorMessage);
                                         return true;
                                     }
@@ -77,6 +77,7 @@ public class CmdTrust extends PlotCommand {
                             if (!event.isCancelled()) {
                                 plot.addMember(allowed, Plot.AccessLevel.TRUSTED);
                                 plot.removeDenied(allowed);
+                                plugin.getSqlManager().savePlot(plot);
                                 player.sendMessage(C("MsgNowAllowed", args[1]));
 
                                 if (isAdvancedLogging()) {
@@ -95,7 +96,7 @@ public class CmdTrust extends PlotCommand {
                             }
                         }
                     } else {
-                        player.sendMessage(C("MsgThisPlot") + "(" + plot.getId() + ") " + C("MsgNotYoursNotAllowedAdd"));
+                        player.sendMessage(C("MsgThisPlot") + "§7(§b" + plot.getId() + "§7) §r" + C("MsgNotYoursNotAllowedAdd"));
                     }
                 } else {
                     player.sendMessage(C("MsgThisPlot") + C("MsgHasNoOwner"));

@@ -57,14 +57,14 @@ public class CmdClear extends PlotCommand {
                                     EconomyResponse er = serverBridge.withdrawPlayer(player, price);
 
                                     if (!er.transactionSuccess()) {
-                                        player.sendMessage(er.errorMessage);
+                                        player.sendMessage("§c" + er.errorMessage);
                                         serverBridge.getLogger().warning(er.errorMessage);
                                         return true;
                                     }
                                 }
                             } else {
                                 player.sendMessage(
-                                        C("MsgNotEnoughClear") + " " + C("WordMissing") + " " + serverBridge.getEconomy().get().format(price));
+                                        C("MsgNotEnoughClear") + " " + C("WordMissing") + " §b" + serverBridge.getEconomy().get().format(price) + "§r");
                                 return true;
                             }
                         } else {
@@ -85,7 +85,7 @@ public class CmdClear extends PlotCommand {
                             }
                         }
                     } else {
-                        player.sendMessage(C("MsgThisPlot") + "(" + plot.getId().getID() + ") " + C("MsgNotYoursNotAllowedClear"));
+                        player.sendMessage(C("MsgThisPlot") + "§7(§b" + plot.getId().getID() + "§7) §r" + C("MsgNotYoursNotAllowedClear"));
                     }
                 }
             } else {

@@ -48,7 +48,7 @@ public class CmdBuy extends PlotCommand {
                                 } else {
                                     double cost = plot.getPrice();
 
-                                    if (serverBridge.has(player, cost)) {
+                                    if (!serverBridge.has(player, cost)) {
                                         player.sendMessage(C("MsgNotEnoughBuy"));
                                     } else {
                                         PlotBuyEvent event = new PlotBuyEvent(plot, player, cost);
@@ -67,14 +67,20 @@ public class CmdBuy extends PlotCommand {
                                                 if (er2.transactionSuccess()) {
                                                     for (IPlayer onlinePlayers : serverBridge.getOnlinePlayers()) {
                                                         if (onlinePlayers.getName().equals(oldOwner)) {
-                                                            onlinePlayers.sendMessage(C("WordPlot") + " " + plot.getId() + " "
-                                                                    + C("SoldTo", buyer) + serverBridge.getEconomy().get().format(cost));
+                                                            onlinePlayers.sendMessage(C("WordPlot") + " §b" + plot.getId() + "§r "
+                                                                    + C("SoldTo", buyer) + "§a" + serverBridge.getEconomy().get().format(cost) + "§r");
                                                             break;
                                                         }
                                                     }
                                                 } else {
-                                                    player.sendMessage(er2.errorMessage);
+                                                    player.sendMessage("§c" + er2.errorMessage);
                                                     serverBridge.getLogger().warning(er2.errorMessage);
+                                                    // Refund the buyer since the seller deposit failed
+                                                    EconomyResponse refund = serverBridge.depositPlayer(player, cost);
+                                                    if (!refund.transactionSuccess()) {
+                                                        serverBridge.getLogger().warning("Failed to refund buyer " + buyer + ": " + refund.errorMessage);
+                                                    }
+                                                    return true;
                                                 }
 
                                                 plot.setOwner(buyer);
@@ -94,7 +100,7 @@ public class CmdBuy extends PlotCommand {
                                                                     + cost);
                                                 }
                                             } else {
-                                                player.sendMessage(er.errorMessage);
+                                                player.sendMessage("§c" + er.errorMessage);
                                                 serverBridge.getLogger().warning(er.errorMessage);
                                             }
                                         }
@@ -105,7 +111,7 @@ public class CmdBuy extends PlotCommand {
                             player.sendMessage(C("MsgPlotNotForSale"));
                         }
                     } else {
-                        player.sendMessage("No plot found or on road."); //todo caption this
+                        player.sendMessage("§cNo plot found or on road."); //todo caption this
                     }
                 } else {
                     return false;

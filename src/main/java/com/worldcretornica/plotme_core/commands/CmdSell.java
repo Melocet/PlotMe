@@ -62,7 +62,7 @@ public class CmdSell extends PlotCommand {
                                         try {
                                             price = Double.parseDouble(args[1]);
                                         } catch (NumberFormatException e) {
-                                            player.sendMessage("Invalid price.");
+                                            player.sendMessage("§cInvalid price.");
                                             return true;
                                         }
                                     }

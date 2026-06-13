@@ -1,23 +1,42 @@
 package com.worldcretornica.plotme_core;
 
-import com.google.common.base.Optional;
 import com.worldcretornica.plotme_core.api.IWorld;
 import com.worldcretornica.plotme_core.api.Vector;
+import com.worldcretornica.plotme_core.flag.PlotFlag;
 
-import java.sql.Date;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
+import java.time.LocalDate;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 public class Plot {
 
+    /**
+     * Reserved {@code pluginName} value in the per-plot metadata table used
+     * to store flag values. Real plugins must not use this string as their
+     * own metadata namespace.
+     */
+    public static final String FLAGS_NAMESPACE = "flags";
+
     private final HashMap<String, Plot.AccessLevel> allowed = new HashMap<>();
     private final HashSet<String> denied = new HashSet<>();
     private final HashMap<String, Map<String, String>> metadata = new HashMap<>();
+    /**
+     * PlotIds (within the same world) this plot is merged with. Merging is
+     * symmetric -- every member of a merged cluster carries the set of the
+     * other members. Persisted in the additive {@code plotmecore_merged}
+     * table so existing schemas keep working when this is loaded against
+     * older databases.
+     *
+     * Cross-plot building / clearing for merged plots is intentionally
+     * not implemented yet; consumers should treat this as data only, and
+     * resolve their own behaviour from it.
+     */
+    private final HashSet<PlotId> mergedWith = new HashSet<>();
     private final Vector plotTopLoc;
     private final Vector plotBottomLoc;
     private final String createdDate;
@@ -25,7 +44,7 @@ public class Plot {
     private UUID ownerId = UUID.randomUUID();
     private IWorld world;
     private String biome = "PLAINS";
-    private Date expiredDate = null;
+    private LocalDate expiredDate = null;
     private boolean finished = false;
     private PlotId id = new PlotId(0, 0);
     private double price = 0.0;
@@ -45,10 +64,10 @@ public class Plot {
         setId(plotId);
         this.plotTopLoc = plotTopLoc;
         this.plotBottomLoc = plotBottomLoc;
-        createdDate = new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime());
+        createdDate = LocalDate.now().toString();
     }
 
-    public Plot(long internalID, String owner, UUID ownerId, IWorld world, String biome, Date expiredDate,
+    public Plot(long internalID, String owner, UUID ownerId, IWorld world, String biome, LocalDate expiredDate,
             HashMap<String, AccessLevel> allowed,
             HashSet<String>
                     denied,
@@ -84,12 +103,9 @@ public class Plot {
                 setExpiredDate(null);
             }
         } else {
-            Calendar cal = Calendar.getInstance();
-            cal.add(Calendar.DAY_OF_YEAR, days);
-            java.util.Date utlDate = cal.getTime();
-            java.sql.Date temp = new java.sql.Date(utlDate.getTime());
-            if (expiredDate == null || temp.after(expiredDate)) {
-                expiredDate = temp;
+            LocalDate target = LocalDate.now().plusDays(days);
+            if (expiredDate == null || target.isAfter(expiredDate)) {
+                expiredDate = target;
             }
         }
     }
@@ -140,8 +156,6 @@ public class Plot {
 
     public void removeMembers(String name) {
         if (getMembers().containsKey(name)) {
-            // HashMap#remove doesn't take 2 arguments
-            // getMembers().remove(name, AccessLevel.ALLOWED);
             getMembers().remove(name);
         }
     }
@@ -194,11 +208,11 @@ public class Plot {
         this.world = world;
     }
 
-    public final Date getExpiredDate() {
+    public final LocalDate getExpiredDate() {
         return expiredDate;
     }
 
-    public final void setExpiredDate(Date expiredDate) {
+    public final void setExpiredDate(LocalDate expiredDate) {
         this.expiredDate = expiredDate;
     }
 
@@ -209,7 +223,7 @@ public class Plot {
     public final void setFinished(boolean finished) {
         this.finished = finished;
         if (finished) {
-            setFinishedDate(new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime()));
+            setFinishedDate(LocalDate.now().toString());
         } else {
             setFinishedDate(null);
         }
@@ -284,6 +298,84 @@ public class Plot {
 
     public Map<String, Map<String, String>> getAllPlotProperties() {
         return metadata;
+    }
+
+    // ------------------------------------------------------------------
+    // Per-plot flags. Backed by the same metadata map / plotmecore_metadata
+    // table; we just reserve the {@link #FLAGS_NAMESPACE} plugin name for
+    // ourselves. This keeps the schema unchanged while giving us a typed
+    // API.
+    // ------------------------------------------------------------------
+
+    /**
+     * Resolve a flag value, falling back to the flag's default when this
+     * plot has not explicitly set it. Never returns {@code null} as long as
+     * the flag itself supplied a non-null default.
+     */
+    public <T> T getFlagValue(PlotFlag<T> flag) {
+        Map<String, String> flagMap = metadata.get(FLAGS_NAMESPACE);
+        if (flagMap == null) {
+            return flag.getDefaultValue();
+        }
+        String raw = flagMap.get(flag.getName());
+        if (raw == null) {
+            return flag.getDefaultValue();
+        }
+        try {
+            return flag.parse(raw);
+        } catch (RuntimeException ex) {
+            // Corrupted value -- treat as unset rather than killing the
+            // event handler that called us.
+            return flag.getDefaultValue();
+        }
+    }
+
+    /**
+     * @return {@code true} if this plot has an explicit value stored for
+     *         the given flag (i.e. it differs from "use default" purely by
+     *         being present, regardless of equality with the default).
+     */
+    public boolean hasFlagValue(PlotFlag<?> flag) {
+        Map<String, String> flagMap = metadata.get(FLAGS_NAMESPACE);
+        return flagMap != null && flagMap.containsKey(flag.getName());
+    }
+
+    /**
+     * Store an explicit value for the given flag. Passing the same value as
+     * {@link PlotFlag#getDefaultValue()} still records an explicit entry --
+     * the caller can use {@link #resetFlagValue(PlotFlag)} if they wanted to
+     * fall back to the default.
+     */
+    public <T> void setFlagValue(PlotFlag<T> flag, T value) {
+        setPlotProperty(FLAGS_NAMESPACE, flag.getName(), flag.serialize(value));
+    }
+
+    /**
+     * Clear the explicit value, so subsequent reads return the flag's
+     * default. No-op if the flag was already unset.
+     */
+    public void resetFlagValue(PlotFlag<?> flag) {
+        Map<String, String> flagMap = metadata.get(FLAGS_NAMESPACE);
+        if (flagMap == null) {
+            return;
+        }
+        flagMap.remove(flag.getName());
+        if (flagMap.isEmpty()) {
+            metadata.remove(FLAGS_NAMESPACE);
+        }
+    }
+
+    /**
+     * Read-only view of all explicitly-set flag values for this plot, keyed
+     * by flag name. Useful for {@code /plotme flag} listings when no
+     * specific flag was requested.
+     */
+    public Map<String, String> getAllFlagValues() {
+        Map<String, String> flagMap = metadata.get(FLAGS_NAMESPACE);
+        if (flagMap == null) {
+            return Collections.emptyMap();
+        }
+        return Collections.unmodifiableMap(flagMap);
     }
 
     /**
@@ -377,6 +469,42 @@ public class Plot {
     }
 
     /**
+     * The live set of plot ids this plot is linked with. Returned by reference
+     * so persistence / merge code can mutate it directly; callers that only
+     * want to inspect should treat it as read-only.
+     */
+    public HashSet<PlotId> getMergedWith() {
+        return mergedWith;
+    }
+
+    /**
+     * Link this plot with another. Does not mutate the other plot — callers
+     * that need a symmetric link must call {@code addMergedWith} on both
+     * sides (the {@code PlotMeCoreManager#linkMergedPlots} helper does this
+     * in one call).
+     */
+    public void addMergedWith(PlotId other) {
+        if (other != null && !other.equals(this.id)) {
+            this.mergedWith.add(other);
+        }
+    }
+
+    public void removeMergedWith(PlotId other) {
+        this.mergedWith.remove(other);
+    }
+
+    /** Bulk load entry point used by {@link com.worldcretornica.plotme_core.storage.Database}. */
+    public void addMergedWith(java.util.Collection<PlotId> ids) {
+        for (PlotId other : ids) {
+            addMergedWith(other);
+        }
+    }
+
+    public boolean isMergedWith(PlotId other) {
+        return mergedWith.contains(other);
+    }
+
+    /**
      * Gets a set of players who have liked this plot
      * @return
      */
@@ -408,6 +536,10 @@ public class Plot {
         return false;
     }
 
+    @Override public int hashCode() {
+        return Objects.hash(internalID, id, ownerId, world, expiredDate);
+    }
+
     public boolean canPlayerLike(UUID uniqueId) {
         return !likers.contains(uniqueId);
     }
@@ -421,12 +553,65 @@ public class Plot {
         if (getMembers().containsKey("*")) {
             return Optional.of(AccessLevel.ALLOWED);
         } else {
-            return Optional.fromNullable(getMembers().get(allowed));
+            return Optional.ofNullable(getMembers().get(allowed));
         }
     }
 
     public Optional<AccessLevel> isMember(UUID uniqueId) {
         return isMember(uniqueId.toString());
+    }
+
+    /**
+     * Returns the fine-grained {@link com.worldcretornica.plotme_core.AccessLevel} for the given
+     * player on this plot.
+     *
+     * <p>Resolution order:</p>
+     * <ol>
+     *   <li>Owner -&gt; {@link com.worldcretornica.plotme_core.AccessLevel#MANAGE}.</li>
+     *   <li>An explicit per-player override stored under the {@code plotme_core_access}
+     *       metadata namespace (set by the {@code /plotme access} command) -&gt; that level.</li>
+     *   <li>Wildcard ("*") explicit override under the same namespace -&gt; that level.</li>
+     *   <li>Legacy membership: present in the {@code allowed} map (either as ALLOWED or TRUSTED,
+     *       or via the "*" wildcard) -&gt; {@link com.worldcretornica.plotme_core.AccessLevel#BUILD}.
+     *       The spec maps both legacy tiers to BUILD; MANAGE / INTERACT / CONTAINER can only be
+     *       reached via the explicit metadata override above.</li>
+     *   <li>Otherwise -&gt; {@code null} (default deny).</li>
+     * </ol>
+     *
+     * @param uuid player UUID; null returns null
+     * @return resolved access level, or null if the player has no access
+     */
+    public com.worldcretornica.plotme_core.AccessLevel getAccessLevel(UUID uuid) {
+        if (uuid == null) {
+            return null;
+        }
+        if (uuid.equals(ownerId)) {
+            return com.worldcretornica.plotme_core.AccessLevel.MANAGE;
+        }
+        Map<String, String> overrides = metadata.get("plotme_core_access");
+        if (overrides != null) {
+            String explicit = overrides.get(uuid.toString());
+            if (explicit != null) {
+                com.worldcretornica.plotme_core.AccessLevel parsed =
+                        com.worldcretornica.plotme_core.AccessLevel.fromString(explicit);
+                if (parsed != null) {
+                    return parsed;
+                }
+            }
+            String wildcard = overrides.get("*");
+            if (wildcard != null) {
+                com.worldcretornica.plotme_core.AccessLevel parsed =
+                        com.worldcretornica.plotme_core.AccessLevel.fromString(wildcard);
+                if (parsed != null) {
+                    return parsed;
+                }
+            }
+        }
+        // Fall back to legacy add/trust membership: both map to BUILD per v2.0.0 spec.
+        if (isMember(uuid).isPresent()) {
+            return com.worldcretornica.plotme_core.AccessLevel.BUILD;
+        }
+        return null;
     }
 
     @Override public String toString() {

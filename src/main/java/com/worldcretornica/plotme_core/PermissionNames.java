@@ -20,6 +20,8 @@ public class PermissionNames {
     public static final String USER_MIDDLE = "PlotMe.use.middle";
     public static final String USER_PROTECT = "PlotMe.use.protect";
     public static final String USER_TRUST = "PlotMe.use.trust";
+    public static final String USER_FLAG = "plotme.use.flag";
+    public static final String USER_MERGE = "PlotMe.use.merge";
 
     //Admin Permissions
     public static final String ADMIN_TRUST = "PlotMe.admin.trust";
@@ -42,4 +44,5 @@ public class PermissionNames {
     public static final String ADMIN_MIDDLE_OTHER = "PlotMe.admin.middle";
     public static final String ADMIN_RESET = "PlotMe.admin.reset";
     public static final String USER_RESET = "PlotMe.use.reset";
+    public static final String ADMIN_FLAG = "plotme.admin.flag";
 }

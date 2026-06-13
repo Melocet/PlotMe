@@ -1,6 +1,5 @@
 package com.worldcretornica.plotme_core.bukkit;
 
-import com.google.common.base.Optional;
 import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.extension.platform.Actor;
 import com.sk89q.worldedit.extent.AbstractDelegateExtent;
@@ -13,6 +12,8 @@ import com.worldcretornica.plotme_core.PlotMeCoreManager;
 import com.worldcretornica.plotme_core.PlotMe_Core;
 import com.worldcretornica.plotme_core.api.IPlayer;
 import com.worldcretornica.plotme_core.api.Location;
+
+import java.util.Optional;
 
 class PlotMeWorldEdit extends AbstractDelegateExtent {
 

@@ -15,9 +15,13 @@ public class BukkitMaterial implements IMaterial {
         return material;
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     public String getId() {
-        return "" + material.getId();
+        // Material.getId() (numeric ID) is removed in modern Paper. The
+        // IMaterial.getId() contract is consumed nowhere inside the plugin
+        // today, so returning the enum/namespaced name is the only sane
+        // forward-compatible value. Callers expecting a numeric ID would
+        // already have been broken on 1.13+.
+        return material.name();
     }
 }

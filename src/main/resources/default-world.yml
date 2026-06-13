@@ -39,7 +39,10 @@ economy:
     BiomeChangePrice: 0.0
     ProtectPrice: 0.0
     DisposePrice: 0.0
-AutoLinkPlots: true
+# Merging is manual only: the plot owner runs /plotme merge <direction>.
+# /plotme claim never folds same-owner neighbours together automatically,
+# regardless of this flag's value. Kept here for forward compatibility.
+AutoLinkPlots: false
 DisableExplosion: true
 DisableIgnition: true
 Projectiles: true

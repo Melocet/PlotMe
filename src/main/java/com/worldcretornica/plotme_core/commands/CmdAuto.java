@@ -40,6 +40,20 @@ public class CmdAuto extends PlotCommand {
                     world = player.getWorld();
                 }
 
+                // Guard the spiral search against a partially-loaded plotworld.
+                // isPlotWorld(world) above only checks the PlotMapInfo map; the
+                // gen-manager map is populated separately (WorldInitEvent /
+                // WorldLoadEvent). Right after `/mv create plots normal -g
+                // PlotMe`, there is a window where the world is "a plot world"
+                // per the config / PlotMapInfo but no gen manager has been
+                // registered yet, which causes an NPE inside the async
+                // isPlotAvailable -> getPlotTopLoc path. Bail early with a
+                // friendly message instead of crashing.
+                if (manager.getGenManager(world) == null) {
+                    player.sendMessage(C("MsgNoPlotWorldSetup"));
+                    return true;
+                }
+
                 int playerLimit = getPlotLimit(player);
 
                 int plotsOwned = manager.getOwnedPlotCount(player.getUniqueId(), world);
@@ -49,10 +63,11 @@ public class CmdAuto extends PlotCommand {
                     return true;
                 }
                 final PlotMapInfo pmi = manager.getMap(world);
+                final int spiralMax = Math.max(1, plugin.getConfig().getInt("autoSpiralMax", 50));
                 serverBridge.runTaskAsynchronously(new Runnable() {
                     @Override public void run() {
                         loop:
-                        for (int i = 0; i < 50000; i++) {
+                        for (int i = 0; i <= spiralMax; i++) {
                             for (int x = -i; x <= i; x++) {
                                 for (int z = -i; z <= i; z++) {
                                     final PlotId id = new PlotId(x, z);
@@ -69,10 +84,12 @@ public class CmdAuto extends PlotCommand {
                                                 EconomyResponse er = serverBridge.withdrawPlayer(player, price);
 
                                                 if (!er.transactionSuccess()) {
-                                                    player.sendMessage(er.errorMessage);
+                                                    player.sendMessage("§c" + er.errorMessage);
+                                                    return;
                                                 }
                                             } else {
-                                                player.sendMessage("You do not have enough money to buy this plot");
+                                                player.sendMessage("§cYou do not have enough money to buy this plot");
+                                                return;
                                             }
                                         }
                                         plugin.getServerBridge().runTask(new Runnable() {
@@ -80,8 +97,17 @@ public class CmdAuto extends PlotCommand {
                                                 manager.createPlot(id, world, name, uuid, pmi);
                                                 // Teleport must run on the main thread — Paper rejects
                                                 // PlayerTeleportEvent from async scheduler workers.
-                                                player.teleport(manager.getPlotHome(id, world), plugin);
-                                                player.sendMessage(C("MsgThisPlotYours") + " " + C("WordUse") + " /plotme home" + " " + C("MsgToGetToIt"));
+                                                // getPlotHome can now return null when the gen manager
+                                                // is unregistered between the spiral check and this
+                                                // sync hop (e.g. world unload race). Skip teleport in
+                                                // that pathological case so we don't NPE on a freshly
+                                                // claimed plot.
+                                                com.worldcretornica.plotme_core.api.Location home =
+                                                        manager.getPlotHome(id, world);
+                                                if (home != null) {
+                                                    player.teleport(home, plugin);
+                                                }
+                                                player.sendMessage(C("MsgThisPlotYours") + " " + C("WordUse") + " §b/plotme home§r" + " " + C("MsgToGetToIt"));
                                             }
                                         });
                                         break loop;

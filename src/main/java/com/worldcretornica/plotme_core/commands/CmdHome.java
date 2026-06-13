@@ -45,7 +45,17 @@ public class CmdHome extends PlotCommand {
                 }
                 //noinspection ConstantConditions -- Stops IntelliJ from attempting to optimize this
                 if (world == null) {
-                    player.sendMessage(C("NotPlotWorld"));
+                    // getFirstWorld() now returns null instead of throwing
+                    // when no plot worlds are registered. Tell the player to
+                    // ask an admin to create one.
+                    player.sendMessage(C("MsgNoPlotWorldSetup"));
+                    return true;
+                }
+                // Guard against the gen-manager registration race: a plot
+                // world can be in the PlotMapInfo map without yet having a
+                // gen manager, which would NPE inside getPlotHome below.
+                if (manager.getGenManager(world) == null) {
+                    player.sendMessage(C("MsgNoPlotWorldSetup"));
                     return true;
                 }
                 int nb = 1;
@@ -59,14 +69,18 @@ public class CmdHome extends PlotCommand {
                 }
 
                 if (args.length == 3) {
+                    if (!player.hasPermission("PlotMe.admin.home") && !player.hasPermission("PlotMe.admin")) {
+                        return false;
+                    }
                     try {
                         nb = Integer.parseInt(args[1]);
                     } catch (NumberFormatException e) {
                         player.sendMessage(getUsage());
+                        return true;
                     }
                     IOfflinePlayer offlinePlayer = serverBridge.getOfflinePlayer(args[2]);
                     if (offlinePlayer == null) {
-                        player.sendMessage("Error in Home Command!");
+                        player.sendMessage("§cError in Home Command!");
                         return true;
                     }
                     uuid = offlinePlayer.getUniqueId();
@@ -95,13 +109,13 @@ public class CmdHome extends PlotCommand {
                                             EconomyResponse er = serverBridge.withdrawPlayer(player, price);
 
                                             if (!er.transactionSuccess()) {
-                                                player.sendMessage(er.errorMessage);
+                                                player.sendMessage("§c" + er.errorMessage);
                                                 return true;
                                             }
                                         }
                                     } else {
                                         player.sendMessage(
-                                                C("MsgNotEnoughTp") + " " + C("WordMissing") + " " + serverBridge.getEconomy().get().format(price));
+                                                C("MsgNotEnoughTp") + " " + C("WordMissing") + " §b" + serverBridge.getEconomy().get().format(price) + "§r");
                                         return true;
                                     }
                                 } else {
@@ -112,7 +126,7 @@ public class CmdHome extends PlotCommand {
                                     player.teleport(event.getHomeLocation(), plugin);
 
                                     if (price != 0) {
-                                        player.sendMessage(serverBridge.getEconomy().get().format(price));
+                                        player.sendMessage("§a" + serverBridge.getEconomy().get().format(price) + "§r");
                                     }
                                 }
                                 return true;

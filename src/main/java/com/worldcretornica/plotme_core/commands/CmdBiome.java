@@ -1,6 +1,5 @@
 package com.worldcretornica.plotme_core.commands;
 
-import com.google.common.base.Optional;
 import com.worldcretornica.plotme_core.PermissionNames;
 import com.worldcretornica.plotme_core.Plot;
 import com.worldcretornica.plotme_core.PlotMapInfo;
@@ -10,6 +9,8 @@ import com.worldcretornica.plotme_core.api.IPlayer;
 import com.worldcretornica.plotme_core.api.IWorld;
 import com.worldcretornica.plotme_core.api.event.PlotBiomeChangeEvent;
 import net.milkbowl.vault.economy.EconomyResponse;
+
+import java.util.Optional;
 
 public class CmdBiome extends PlotCommand {
 
@@ -34,16 +35,20 @@ public class CmdBiome extends PlotCommand {
             if (manager.isPlotWorld(world)) {
                 Plot plot = manager.getPlot(player);
                 if (plot != null) {
-                    Optional<String> biome = Optional.absent();
+                    Optional<String> biome = Optional.empty();
+                    String biomeInput = "";
                     if (args.length == 2) {
-                        biome = serverBridge.getBiome(args[1]);
+                        biomeInput = args[1];
+                        biome = serverBridge.getBiome(biomeInput);
                     } else if (args.length == 3) {
-                        biome = serverBridge.getBiome(args[1] + " " + args[2]);
+                        biomeInput = args[1] + " " + args[2];
+                        biome = serverBridge.getBiome(biomeInput);
                     } else if (args.length == 4) {
-                        biome = serverBridge.getBiome(args[1] + " " + args[2] + " " + args[3]);
+                        biomeInput = args[1] + " " + args[2] + " " + args[3];
+                        biome = serverBridge.getBiome(biomeInput);
                     }
                     if (!biome.isPresent()) {
-                        player.sendMessage(C("InvalidBiome", biome.get()));
+                        player.sendMessage(C("InvalidBiome", biomeInput));
                         return true;
                     }
 
@@ -60,13 +65,13 @@ public class CmdBiome extends PlotCommand {
                             price = pmi.getBiomeChangePrice();
 
                             if (!serverBridge.has(player, price)) {
-                                player.sendMessage("It costs " + serverBridge.getEconomy().get().format(price) + " to change the biome.");
+                                player.sendMessage("§eIt costs §b" + serverBridge.getEconomy().get().format(price) + "§e to change the biome.");
                                 return true;
                             } else if (!event.isCancelled()) {
                                 EconomyResponse er = serverBridge.withdrawPlayer(player, price);
 
                                 if (!er.transactionSuccess()) {
-                                    player.sendMessage(er.errorMessage);
+                                    player.sendMessage("§c" + er.errorMessage);
                                     serverBridge.getLogger().warning(er.errorMessage);
                                     return true;
                                 }
@@ -77,10 +82,16 @@ public class CmdBiome extends PlotCommand {
 
                         if (!event.isCancelled()) {
                             plot.setBiome(biome.get());
-                            manager.setBiome(plot);
+                            int blocks = manager.setBiome(plot);
                             plugin.getSqlManager().savePlot(plot);
 
-                            player.sendMessage(C("BiomeChanged", biome.get()));
+                            // MsgBiomeApplied reports the full block count so
+                            // the player can see the change actually covered
+                            // the whole plot (and the entire merged cluster
+                            // when applicable), not just where they were
+                            // standing — that was the bug this caption was
+                            // introduced to make visible.
+                            player.sendMessage(C("MsgBiomeApplied", biome.get(), String.valueOf(blocks)));
 
                             if (isAdvancedLogging()) {
                                 if (price == 0) {
@@ -95,7 +106,7 @@ public class CmdBiome extends PlotCommand {
                             }
                         }
                     } else {
-                        player.sendMessage(C("MsgThisPlot") + "(" + plot.getId() + ") " + C("MsgNotYoursNotAllowedBiome"));
+                        player.sendMessage(C("MsgThisPlot") + "§7(§b" + plot.getId() + "§7) §r" + C("MsgNotYoursNotAllowedBiome"));
                     }
                 } else {
                     player.sendMessage(C("MsgThisPlot") + C("MsgHasNoOwner"));

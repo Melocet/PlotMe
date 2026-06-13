@@ -16,13 +16,6 @@
 
 package com.worldcretornica.plotme_core.api.event.eventbus;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
-import com.google.common.reflect.TypeToken;
 import com.worldcretornica.plotme_core.api.event.Event;
 import com.worldcretornica.plotme_core.api.event.ICancellable;
 
@@ -30,13 +23,17 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class EventBus implements EventManager {
 
     private final Object lock = new Object();
-    private final Multimap<Class<? extends Event>, MethodEventHandler> handlersByEvent = HashMultimap.create();
+    private final Map<Class<? extends Event>, Set<MethodEventHandler>> handlersByEvent = new ConcurrentHashMap<>();
 
     /**
      * A cache of all the handlers for an event type for quick event posting.
@@ -46,14 +43,30 @@ public class EventBus implements EventManager {
      * removed.
      *
      */
-    private final LoadingCache<Class<? extends Event>, HandlerCache> handlersCache =
-            CacheBuilder.newBuilder().build(new CacheLoader<Class<? extends Event>, HandlerCache>() {
-                @Override
-                public HandlerCache load(Class<? extends Event> type) throws Exception {
-                    return bakeHandlers(type);
-                }
-            });
+    private final Map<Class<? extends Event>, HandlerCache> handlersCache = new ConcurrentHashMap<>();
+
     public EventBus() {
+    }
+
+    /**
+     * Walk the supertype graph of {@code rootType} and collect every class /
+     * interface in it. Replaces the Guava {@code TypeToken.of(rootType).getTypes().rawTypes()}
+     * call. Order isn't significant — handlers are sorted by {@link Order} afterwards.
+     */
+    private static Set<Class<?>> collectAllSupertypes(Class<?> rootType) {
+        Set<Class<?>> visited = new LinkedHashSet<>();
+        collectAllSupertypes(rootType, visited);
+        return visited;
+    }
+
+    private static void collectAllSupertypes(Class<?> type, Set<Class<?>> visited) {
+        if (type == null || !visited.add(type)) {
+            return;
+        }
+        collectAllSupertypes(type.getSuperclass(), visited);
+        for (Class<?> iface : type.getInterfaces()) {
+            collectAllSupertypes(iface, visited);
+        }
     }
 
     private static boolean isValidHandler(Method method) {
@@ -69,13 +82,16 @@ public class EventBus implements EventManager {
     }
 
     private HandlerCache bakeHandlers(Class<? extends Event> rootType) {
-        final List<MethodEventHandler> registrations = Lists.newArrayList();
-        Set<Class<?>> types = (Set) TypeToken.of(rootType).getTypes().rawTypes();
+        final List<MethodEventHandler> registrations = new ArrayList<>();
+        Set<Class<?>> types = collectAllSupertypes(rootType);
 
         synchronized (this.lock) {
             for (Class<?> type : types) {
                 if (Event.class.isAssignableFrom(type)) {
-                    registrations.addAll(this.handlersByEvent.get((Class<? extends Event>) type));
+                    Set<MethodEventHandler> handlers = this.handlersByEvent.get(type);
+                    if (handlers != null) {
+                        registrations.addAll(handlers);
+                    }
                 }
             }
         }
@@ -86,7 +102,7 @@ public class EventBus implements EventManager {
     }
 
     private HandlerCache getHandlerCache(Class<? extends Event> type) {
-        return this.handlersCache.getUnchecked(type);
+        return this.handlersCache.computeIfAbsent(type, this::bakeHandlers);
     }
 
     private List<Subscriber> findAllSubscribers(Object object) {
@@ -116,7 +132,9 @@ public class EventBus implements EventManager {
     }
 
     public boolean register(Subscriber subscriber) {
-        return registerAll(Lists.newArrayList(subscriber));
+        List<Subscriber> single = new ArrayList<>();
+        single.add(subscriber);
+        return registerAll(single);
     }
 
     private boolean registerAll(List<Subscriber> subscribers) {
@@ -124,13 +142,15 @@ public class EventBus implements EventManager {
             boolean changed = false;
 
             for (Subscriber sub : subscribers) {
-                if (this.handlersByEvent.put(sub.getEventClass(), sub.getHandler())) {
+                Set<MethodEventHandler> set = this.handlersByEvent
+                        .computeIfAbsent(sub.getEventClass(), k -> new HashSet<>());
+                if (set.add(sub.getHandler())) {
                     changed = true;
                 }
             }
 
             if (changed) {
-                this.handlersCache.invalidateAll();
+                this.handlersCache.clear();
             }
 
             return changed;
@@ -142,7 +162,9 @@ public class EventBus implements EventManager {
     }
 
     public boolean unregister(Subscriber subscriber) {
-        return unregisterAll(Lists.newArrayList(subscriber));
+        List<Subscriber> single = new ArrayList<>();
+        single.add(subscriber);
+        return unregisterAll(single);
     }
 
     public boolean unregisterAll(List<Subscriber> subscribers) {
@@ -150,13 +172,14 @@ public class EventBus implements EventManager {
             boolean changed = false;
 
             for (Subscriber sub : subscribers) {
-                if (this.handlersByEvent.remove(sub.getEventClass(), sub.getHandler())) {
+                Set<MethodEventHandler> set = this.handlersByEvent.get(sub.getEventClass());
+                if (set != null && set.remove(sub.getHandler())) {
                     changed = true;
                 }
             }
 
             if (changed) {
-                this.handlersCache.invalidateAll();
+                this.handlersCache.clear();
             }
 
             return changed;

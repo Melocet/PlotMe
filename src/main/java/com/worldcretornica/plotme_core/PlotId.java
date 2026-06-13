@@ -1,19 +1,12 @@
 package com.worldcretornica.plotme_core;
 
-
-public class PlotId {
-
-    private final int x;
-    private final int z;
-
-    public PlotId(int x, int z) {
-        this.x = x;
-        this.z = z;
-    }
+public record PlotId(int x, int z) {
 
     public PlotId(String id) throws NumberFormatException {
-        this.x = Integer.parseInt(id.substring(0, id.indexOf(';')));
-        this.z = Integer.parseInt(id.substring(id.indexOf(';') + 1));
+        this(
+                Integer.parseInt(id.substring(0, id.indexOf(';'))),
+                Integer.parseInt(id.substring(id.indexOf(';') + 1))
+        );
     }
 
     /**
@@ -36,14 +29,6 @@ public class PlotId {
         return false;
     }
 
-    public int getX() {
-        return x;
-    }
-
-    public int getZ() {
-        return z;
-    }
-
     public String getID() {
         return x + ";" + z;
     }
@@ -52,18 +37,4 @@ public class PlotId {
     public String toString() {
         return getID();
     }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof PlotId) {
-            return this.x == ((PlotId) obj).getX() && this.z == ((PlotId) obj).getZ();
-        }
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return getX() + getZ();
-    }
 }
-

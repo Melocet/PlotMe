@@ -61,7 +61,7 @@ public class BukkitWorld implements IWorld {
     public boolean equals(Object obj) {
         boolean result = false;
         if (obj instanceof IWorld) {
-            result = this.hashCode() == obj.hashCode();
+            result = this.getUUID().equals(((IWorld) obj).getUUID());
         }
         return result;
     }

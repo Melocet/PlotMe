@@ -1,7 +1,5 @@
 package com.worldcretornica.plotme_core.bukkit;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.worldcretornica.plotme_core.api.IEntity;
 import com.worldcretornica.plotme_core.api.IWorld;
 import com.worldcretornica.plotme_core.api.Location;
@@ -9,6 +7,8 @@ import com.worldcretornica.plotme_core.api.Vector;
 import com.worldcretornica.plotme_core.bukkit.api.BukkitEntity;
 import com.worldcretornica.plotme_core.bukkit.api.BukkitWorld;
 import org.bukkit.World;
+
+import java.util.Objects;
 
 /**
  * A utility class that allows the conversion of any object from the Bukkit API to an
@@ -36,7 +36,7 @@ public class BukkitUtil {
     }
 
     public static IEntity adapt(org.bukkit.entity.Entity entity) {
-        checkNotNull(entity);
+        Objects.requireNonNull(entity);
         if (entity instanceof org.bukkit.entity.Player p) {
             return PlotMe_CorePlugin.getInstance().wrapPlayer(p);
         }

@@ -27,7 +27,10 @@ public class BukkitCommand extends CommandExBase implements CommandExecutor {
             //noinspection ConstantConditions
             PlotCommand _command = commandMap.get(args[0].toLowerCase());
             if (_command == null) {
-                sender.sendMessage("PlotMe does not have a command by that name.");
+                // Route the unknown-command notice through BukkitCommandSender so it
+                // picks up the canonical "[PlotMe]" prefix like every other chat
+                // message; calling sender.sendMessage directly would bypass it.
+                new BukkitCommandSender(sender).sendMessage("§cPlotMe does not have a command by that name.");
                 return true;
             } else {
                 return _command.execute(plugin.wrapPlayer((Player) sender), args);

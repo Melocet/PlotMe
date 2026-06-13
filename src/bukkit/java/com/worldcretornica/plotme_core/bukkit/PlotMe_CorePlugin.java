@@ -15,6 +15,7 @@ import com.worldcretornica.plotme_core.bukkit.api.BukkitPlayer;
 import com.worldcretornica.plotme_core.bukkit.api.BukkitWorld;
 import com.worldcretornica.plotme_core.bukkit.listener.BukkitPlotDenyListener;
 import com.worldcretornica.plotme_core.bukkit.listener.BukkitPlotListener;
+import com.worldcretornica.plotme_core.bukkit.listener.PlotMenuListener;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SingleLineChart;
 import org.bukkit.World;
@@ -63,6 +64,7 @@ public class PlotMe_CorePlugin extends JavaPlugin implements Listener {
         BukkitPlotListener listener = new BukkitPlotListener(this);
         pm.registerEvents(listener, this);
         pm.registerEvents(new BukkitPlotDenyListener(this), this);
+        pm.registerEvents(new PlotMenuListener(this), this);
         pm.registerEvents(this, this);
         plotme.getEventBus().register(listener);
         //Register Command
@@ -80,12 +82,37 @@ public class PlotMe_CorePlugin extends JavaPlugin implements Listener {
 
     @Override
     public ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {
+        // Bukkit calls this BEFORE the World object exists, so we cannot
+        // register the gen manager into PlotMe_Core.managers here (that map
+        // is keyed by IWorld, not by name).
+        //
+        // We DO ensure the per-world config section exists right now so
+        // that any later registration path uses consistent values.
+        //
+        // Registration into the gen-manager map happens in onWorldInit /
+        // onWorldLoad below, both of which fire synchronously inside
+        // Bukkit's WorldCreator#createWorld() chain. By the time `/mv
+        // create plots normal -g PlotMe` returns, the gen manager should
+        // therefore be registered. We also schedule a next-tick safety
+        // sweep below in case a Multiverse build path swallows one of
+        // those events on a particular server flavour.
         ConfigurationSection wgc = ensureWorldConfig(worldName);
+        final String pendingName = worldName;
+        getServer().getScheduler().runTask(this, () -> {
+            World w = getServer().getWorld(pendingName);
+            if (w != null && w.getGenerator() instanceof DefaultChunkGenerator) {
+                registerPlotWorld(w);
+            }
+        });
         return new DefaultChunkGenerator(wgc);
     }
 
     @EventHandler
     public void onWorldInit(WorldInitEvent event) {
+        // Primary registration point: fires synchronously while the world
+        // is still being built inside WorldCreator#createWorld. This is
+        // what makes `/plotme auto` immediately after `/mv create` safe
+        // on the happy path.
         if (event.getWorld().getGenerator() instanceof DefaultChunkGenerator) {
             registerPlotWorld(event.getWorld());
         }
@@ -93,6 +120,10 @@ public class PlotMe_CorePlugin extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onWorldLoad(WorldLoadEvent event) {
+        // Belt + suspenders: catches worlds that already existed at
+        // server boot (re-load from disk) or that some Multiverse
+        // variants only surface via WorldLoadEvent rather than
+        // WorldInitEvent. registerPlotWorld is idempotent.
         if (event.getWorld().getGenerator() instanceof DefaultChunkGenerator) {
             registerPlotWorld(event.getWorld());
         }

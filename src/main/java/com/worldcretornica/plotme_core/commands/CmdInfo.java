@@ -36,19 +36,24 @@ public class CmdInfo extends PlotCommand {
         if (player.hasPermission(PermissionNames.USER_INFO)) {
             IWorld world = player.getWorld();
             if (manager.isPlotWorld(world)) {
-                Plot plot = manager.getPlot(player);
+                // Use the merged-road-aware lookup so /plot info also works
+                // when standing on a road strip that was filled in by a
+                // merge. Falls back to the plain on-plot lookup if the
+                // player isn't on a road, and returns null on a real
+                // unclaimed road (so the "NoPlotFound" message still fires).
+                Plot plot = manager.getPlotOrMergedRoad(player);
 
                 if (plot == null) {
                     player.sendMessage(C("NoPlotFound"));
                     return true;
                 }
-                player.sendMessage("Internal ID: " + plot.getInternalID());
+                player.sendMessage("§eInternal ID: §b" + plot.getInternalID() + "§r");
                 player.sendMessage(
-                        "ID: " + plot.getId().getID() + " " + C("InfoOwner", serverBridge.getOfflinePlayer(plot.getOwnerId()).getName()) + " " + C
+                        "§eID: §b" + plot.getId().getID() + "§r " + C("InfoOwner", serverBridge.getOfflinePlayer(plot.getOwnerId()).getName()) + " " + C
                                 ("InfoBiome", plot
                                         .getBiome()));
-                player.sendMessage("Likes: " + plot.getLikes());
-                player.sendMessage("Created: " + plot.getCreatedDate());
+                player.sendMessage("§eLikes: §b" + plot.getLikes() + "§r");
+                player.sendMessage("§eCreated: §b" + plot.getCreatedDate() + "§r");
                 final String neverExpire = C("InfoExpire") + ": " + C("WordNever");
                 if (plot.getExpiredDate() == null) {
                     if (plot.isFinished()) {
@@ -83,17 +88,17 @@ public class CmdInfo extends PlotCommand {
                                 + " " + C("InfoProtected") + ": " + C("WordYes"));
                     }
                 } else if (plot.isFinished()) {
-                    player.sendMessage(C("InfoExpire") + ": " + plot.getExpiredDate()
+                    player.sendMessage(C("InfoExpire") + ": §f" + plot.getExpiredDate() + "§r"
                             + " " + C("InfoFinished") + ": " + C("WordYes")
                             + " " + C("InfoProtected") + ": " + C("WordNo"));
                 } else {
-                    player.sendMessage(C("InfoExpire") + ": " + plot.getExpiredDate()
+                    player.sendMessage(C("InfoExpire") + ": §f" + plot.getExpiredDate() + "§r"
                             + " " + C("InfoFinished") + ": " + C("WordNo")
                             + " " + C("InfoProtected") + ": " + C("WordNo"));
                 }
 
                 if (!plot.getMembers().isEmpty()) {
-                    StringBuilder builder = new StringBuilder("Members: ");
+                    StringBuilder builder = new StringBuilder("§bMembers: §f");
                     if (!plot.getMembers().containsKey("*")) {
                         for (Map.Entry<String, Plot.AccessLevel> member : plot.getMembers().entrySet()) {
                             builder.append(plugin.getServerBridge().getOfflinePlayer(UUID.fromString(member.getKey())).getName()).append(" (")
@@ -121,14 +126,14 @@ public class CmdInfo extends PlotCommand {
 
                 if (manager.isEconomyEnabled(world)) {
                     if (plot.isForSale()) {
-                        player.sendMessage(C("InfoForSale") + ": " + plot.getPrice());
+                        player.sendMessage(C("InfoForSale") + ": §a" + plot.getPrice() + "§r");
                     } else {
                         player.sendMessage(C("InfoForSale") + ": " + C("WordNo"));
                     }
                 }
 
-                player.sendMessage(C("WordBottom") + ": " + plot.getPlotBottomLoc().toString());
-                player.sendMessage(C("WordTop") + ": " + plot.getPlotTopLoc().toString());
+                player.sendMessage(C("WordBottom") + ": §f" + plot.getPlotBottomLoc().toString() + "§r");
+                player.sendMessage(C("WordTop") + ": §f" + plot.getPlotTopLoc().toString() + "§r");
 
             } else {
                 player.sendMessage(C("NotPlotWorld"));

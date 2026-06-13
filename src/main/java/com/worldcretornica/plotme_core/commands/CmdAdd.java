@@ -48,7 +48,7 @@ public class CmdAdd extends PlotCommand {
                         if (serverBridge.getPlayer(args[1]) != null) {
                             allowed = serverBridge.getPlayer(args[1]).getUniqueId().toString();
                         } else {
-                            player.sendMessage(String.format("%s was not found. Are they online?", args[1]));
+                            player.sendMessage(String.format("§b%s§c was not found. Are they online?", args[1]));
                             return true;
                         }
                     }
@@ -62,15 +62,15 @@ public class CmdAdd extends PlotCommand {
                             if (manager.isEconomyEnabled(pmi)) {
                                 price = pmi.getAddPlayerPrice();
 
-                                if (serverBridge.has(player, pmi.getAddPlayerPrice())) {
-                                    player.sendMessage("It costs " + serverBridge.getEconomy().get().format(price) + " to add a player to "
+                                if (!serverBridge.has(player, pmi.getAddPlayerPrice())) {
+                                    player.sendMessage("§eIt costs §b" + serverBridge.getEconomy().get().format(price) + "§e to add a player to "
                                             + "the plot.");
                                     return true;
                                 } else if (!event.isCancelled()) {
                                     EconomyResponse er = serverBridge.withdrawPlayer(player, price);
 
                                     if (!er.transactionSuccess()) {
-                                        player.sendMessage(er.errorMessage);
+                                        player.sendMessage("§c" + er.errorMessage);
                                         serverBridge.getLogger().warning(er.errorMessage);
                                         return true;
                                     }
@@ -99,7 +99,7 @@ public class CmdAdd extends PlotCommand {
                             }
                         }
                     } else {
-                        player.sendMessage(C("MsgThisPlot") + "(" + plot.getId() + ") " + C("MsgNotYoursNotAllowedAdd"));
+                        player.sendMessage(C("MsgThisPlot") + "§7(§b" + plot.getId() + "§7) §r" + C("MsgNotYoursNotAllowedAdd"));
                     }
                 } else {
                     player.sendMessage(C("NoPlotFound"));

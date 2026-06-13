@@ -16,9 +16,6 @@
 
 package com.worldcretornica.plotme_core.api.event.eventbus;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -29,12 +26,12 @@ class HandlerCache {
     private final EnumMap<Order, List<MethodEventHandler>> orderGrouped;
 
     HandlerCache(List<MethodEventHandler> registrations) {
-        this.handlers = Lists.newArrayList();
+        this.handlers = new ArrayList<>();
         for (MethodEventHandler reg : registrations) {
             this.handlers.add(reg);
         }
 
-        this.orderGrouped = Maps.newEnumMap(Order.class);
+        this.orderGrouped = new EnumMap<>(Order.class);
         for (Order order : Order.values()) {
             this.orderGrouped.put(order, new ArrayList<MethodEventHandler>());
         }

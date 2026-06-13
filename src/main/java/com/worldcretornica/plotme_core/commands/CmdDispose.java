@@ -42,7 +42,7 @@ public class CmdDispose extends PlotCommand {
                         PlotDisposeEvent event = new PlotDisposeEvent(plot, player);
 
                         if (manager.isEconomyEnabled(pmi)) {
-                            if (serverBridge.has(player, cost)) {
+                            if (!serverBridge.has(player, cost)) {
                                 player.sendMessage(C("MsgNotEnoughDispose"));
                                 return true;
                             }
@@ -55,7 +55,7 @@ public class CmdDispose extends PlotCommand {
                             EconomyResponse economyResponse = serverBridge.withdrawPlayer(player, cost);
 
                             if (!economyResponse.transactionSuccess()) {
-                                player.sendMessage(economyResponse.errorMessage);
+                                player.sendMessage("§c" + economyResponse.errorMessage);
                                 plugin.getLogger().warning(economyResponse.errorMessage);
                                 return true;
                             }
@@ -64,11 +64,21 @@ public class CmdDispose extends PlotCommand {
                         }
 
                         if (!event.isCancelled()) {
+                            // If the plot was part of a merged cluster we need to
+                            // rebuild the road geometry that fillRoad / fillCenterIntersection
+                            // had carved through, BEFORE the plot's row is gone. For
+                            // an un-merged plot disposeMergedPlot is a no-op.
+                            boolean wasMerged = !plot.getMergedWith().isEmpty();
+                            manager.disposeMergedPlot(plot);
                             manager.adjustWall(plot, false);
                             if (manager.deletePlot(plot)) {
-                                player.sendMessage(C("PlotDisposed"));
+                                if (wasMerged) {
+                                    player.sendMessage(C("MsgPlotDisposed"));
+                                } else {
+                                    player.sendMessage(C("PlotDisposed"));
+                                }
                             } else {
-                                player.sendMessage("Plot was not disposed? Something stopped this command.");
+                                player.sendMessage("§cPlot was not disposed? Something stopped this command.");
                             }
 
                             if (isAdvancedLogging()) {
@@ -76,7 +86,7 @@ public class CmdDispose extends PlotCommand {
                             }
                         }
                     } else {
-                        player.sendMessage(C("MsgThisPlot") + "(" + plot.getId() + ") " + C("MsgNotYoursCannotDispose"));
+                        player.sendMessage(C("MsgThisPlot") + "§7(§b" + plot.getId() + "§7) §r" + C("MsgNotYoursCannotDispose"));
                     }
                 }
             } else {

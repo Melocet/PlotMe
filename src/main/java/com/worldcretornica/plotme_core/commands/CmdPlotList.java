@@ -1,12 +1,12 @@
 package com.worldcretornica.plotme_core.commands;
 
-import com.google.common.collect.Lists;
 import com.worldcretornica.plotme_core.PermissionNames;
 import com.worldcretornica.plotme_core.Plot;
 import com.worldcretornica.plotme_core.PlotMe_Core;
 import com.worldcretornica.plotme_core.api.ICommandSender;
 import com.worldcretornica.plotme_core.api.IOfflinePlayer;
 import com.worldcretornica.plotme_core.api.IPlayer;
+import com.worldcretornica.plotme_core.utils.ListPartition;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,7 +30,7 @@ public class CmdPlotList extends PlotCommand {
                 if (args.length >= 2) {
                     IOfflinePlayer offlinePlayer = serverBridge.getOfflinePlayer(args[1]);
                     if (offlinePlayer == null) {
-                        player.sendMessage("No player found by that name");
+                        player.sendMessage("§cNo player found by that name");
                         return true;
                     }
                     uuid = offlinePlayer.getUniqueId();
@@ -42,10 +42,10 @@ public class CmdPlotList extends PlotCommand {
                 }
 
                 // Get plots of that player
-                List<List<Plot>> partition = Lists.partition(plugin.getSqlManager().getPlayerPlots(uuid), 5);
-                player.sendMessage("Plot List" + " (" + page + "/" + partition.size() + ") : ");
+                List<List<Plot>> partition = ListPartition.partition(plugin.getSqlManager().getPlayerPlots(uuid), 5);
+                player.sendMessage("§ePlot List" + " §7(§f" + page + "§7/§f" + partition.size() + "§7) : §r");
                 for (Plot plot : partition.get(page - 1)) {
-                    player.sendMessage("Plot ID: " + plot.getId().getID() + "World: " + plot.getWorld().getName());
+                    player.sendMessage("§ePlot ID: §b" + plot.getId().getID() + "§eWorld: §b" + plot.getWorld().getName() + "§r");
 
                 }
             } else {

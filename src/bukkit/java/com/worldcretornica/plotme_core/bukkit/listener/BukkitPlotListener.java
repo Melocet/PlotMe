@@ -1,6 +1,5 @@
 package com.worldcretornica.plotme_core.bukkit.listener;
 
-import com.google.common.base.Optional;
 import com.worldcretornica.plotme_core.PermissionNames;
 import com.worldcretornica.plotme_core.Plot;
 import com.worldcretornica.plotme_core.PlotId;
@@ -10,27 +9,31 @@ import com.worldcretornica.plotme_core.PlotMe_Core;
 import com.worldcretornica.plotme_core.api.IEntity;
 import com.worldcretornica.plotme_core.api.IPlayer;
 import com.worldcretornica.plotme_core.api.Location;
-import com.worldcretornica.plotme_core.api.event.PlotCreateEvent;
 import com.worldcretornica.plotme_core.api.event.PlotWorldLoadEvent;
-import com.worldcretornica.plotme_core.api.event.eventbus.Order;
 import com.worldcretornica.plotme_core.api.event.eventbus.Subscribe;
 import com.worldcretornica.plotme_core.bukkit.BukkitUtil;
 import com.worldcretornica.plotme_core.bukkit.PlotMe_CorePlugin;
 import com.worldcretornica.plotme_core.bukkit.api.BukkitEntity;
 import com.worldcretornica.plotme_core.bukkit.api.BukkitPlayer;
 import com.worldcretornica.plotme_core.bukkit.api.BukkitWorld;
+import com.worldcretornica.plotme_core.flag.StandardFlags;
+import org.bukkit.GameMode;
 import org.bukkit.Material;
+import org.bukkit.WeatherType;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Animals;
+import org.bukkit.entity.FallingBlock;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockBurnEvent;
 import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.block.BlockExplodeEvent;
+import org.bukkit.event.block.LeavesDecayEvent;
 import org.bukkit.event.block.BlockFadeEvent;
 import org.bukkit.event.block.BlockFormEvent;
 import org.bukkit.event.block.BlockFromToEvent;
@@ -46,6 +49,7 @@ import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.hanging.HangingPlaceEvent;
@@ -53,17 +57,21 @@ import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.metadata.MetadataValue;
 
-import java.util.Calendar;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -89,7 +97,11 @@ public class BukkitPlotListener implements Listener {
             if (player.hasPermission(PermissionNames.ADMIN_BUILDANYWHERE)) {
                 return;
             }
-            Plot plot = manager.getPlot(location);
+            // getPlotOrMergedRoad: a block on a merge-filled road strip
+            // resolves to the cluster's plot, so the cluster owner can build
+            // on the now-visually-attached road. Unclaimed/non-merged road
+            // still returns null → CannotBuild, preserving original behaviour.
+            Plot plot = manager.getPlotOrMergedRoad(location);
             if (plot == null) {
                 player.sendMessage(api.C("CannotBuild"));
                 event.setCancelled(true);
@@ -108,9 +120,11 @@ public class BukkitPlotListener implements Listener {
                         event.setCancelled(true);
                     }
                     if (plot.getExpiredDate() != null) {
-                        Calendar instance = Calendar.getInstance();
-                        instance.add(Calendar.DAY_OF_YEAR, manager.getMap(player).getDaysToExpiration());
-                        if (!plot.getExpiredDate().equals(instance.getTime())) {
+                        // Day-granularity is sufficient for expiry resets — skip the write
+                        // if today's reset would land on the same day already stored.
+                        LocalDate expired = plot.getExpiredDate();
+                        LocalDate target = LocalDate.now().plusDays(manager.getMap(player).getDaysToExpiration());
+                        if (!expired.equals(target)) {
                             plot.resetExpire(manager.getMap(player).getDaysToExpiration());
                             plugin.getAPI().getSqlManager().savePlot(plot);
                         }
@@ -132,7 +146,9 @@ public class BukkitPlotListener implements Listener {
             return;
         }
         if (manager.isPlotWorld(location)) {
-            Plot plot = manager.getPlot(location);
+            // See onBlockBreak: merge-filled road strips resolve to the
+            // cluster's plot so the owner can keep building on them.
+            Plot plot = manager.getPlotOrMergedRoad(location);
             if (plot == null) {
                 player.sendMessage(api.C("CannotBuild"));
                 event.setCancelled(true);
@@ -151,9 +167,11 @@ public class BukkitPlotListener implements Listener {
                         event.setCancelled(true);
                     }
                     if (plot.getExpiredDate() != null) {
-                        Calendar instance = Calendar.getInstance();
-                        instance.add(Calendar.DAY_OF_YEAR, manager.getMap(player).getDaysToExpiration());
-                        if (!plot.getExpiredDate().equals(instance.getTime())) {
+                        // Day-granularity is sufficient for expiry resets — skip the write
+                        // if today's reset would land on the same day already stored.
+                        LocalDate expired = plot.getExpiredDate();
+                        LocalDate target = LocalDate.now().plusDays(manager.getMap(player).getDaysToExpiration());
+                        if (!expired.equals(target)) {
                             plot.resetExpire(manager.getMap(player).getDaysToExpiration());
                             plugin.getAPI().getSqlManager().savePlot(plot);
                         }
@@ -308,9 +326,20 @@ public class BukkitPlotListener implements Listener {
 
             if (id == null) {
                 event.setCancelled(true);
-            } else {
-                event.setCancelled(api.isPlotLocked(id));
-
+                return;
+            }
+            if (api.isPlotLocked(id)) {
+                event.setCancelled(true);
+                return;
+            }
+            // Fire spread is its own per-plot toggle. We treat any spread
+            // of FIRE blocks as "fire spread" for flag purposes; cancelling
+            // here stops fire from creeping across the plot.
+            if (event.getNewState() != null && event.getNewState().getType() == Material.FIRE) {
+                Plot plot = manager.getPlot(location);
+                if (plot != null && !plot.getFlagValue(StandardFlags.FIRE_SPREAD)) {
+                    event.setCancelled(true);
+                }
             }
         }
     }
@@ -450,8 +479,11 @@ public class BukkitPlotListener implements Listener {
             if (pmi != null && pmi.isDisableExplosion()) {
                 event.setCancelled(true);
             } else {
-                PlotId id = manager.getPlotId(entity.getLocation());
-                if (id == null) {
+                Plot plot = manager.getPlot(entity.getLocation());
+                if (plot == null) {
+                    event.setCancelled(true);
+                } else if (!plot.getFlagValue(StandardFlags.EXPLOSION)) {
+                    // Per-plot opt-out via flag.
                     event.setCancelled(true);
                 }
             }
@@ -466,8 +498,10 @@ public class BukkitPlotListener implements Listener {
         if (pmi != null && pmi.isDisableExplosion()) {
             event.setCancelled(true);
         } else {
-            PlotId id = manager.getPlotId(location);
-            if (id == null) {
+            Plot plot = manager.getPlot(location);
+            if (plot == null) {
+                event.setCancelled(true);
+            } else if (!plot.getFlagValue(StandardFlags.EXPLOSION)) {
                 event.setCancelled(true);
             }
         }
@@ -490,7 +524,7 @@ public class BukkitPlotListener implements Listener {
                 if (plot == null) {
                     event.setCancelled(true);
                 } else {
-                    if (plot.getOwnerId().equals(event.getPlayer().getUniqueId())) {
+                    if (event.getPlayer() != null && plot.getOwnerId().equals(event.getPlayer().getUniqueId())) {
                         return;
                     }
                     Optional<Plot.AccessLevel> member = plot.isMember(event.getIgnitingEntity().getUniqueId());
@@ -638,12 +672,56 @@ public class BukkitPlotListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onCreatureSpawn(CreatureSpawnEvent event) {
-
         Location location = BukkitUtil.adapt(event.getLocation());
 
-        if (manager.isPlotWorld(location)) {
-            PlotId id = manager.getPlotId(location);
-            if (id != null) {
+        if (!manager.isPlotWorld(location)) {
+            return;
+        }
+
+        // Spawns on the road (not inside any plot) keep the old behaviour:
+        // unconditionally cancelled. Roads aren't owned by anyone so we
+        // can't consult flags there.
+        Plot plot = manager.getPlot(location);
+        if (plot == null) {
+            event.setCancelled(true);
+            return;
+        }
+
+        // Spawner / spawn-egg / breeding / etc. -- treat as player intent
+        // and let it through regardless of flags. We only police the
+        // *natural* spawn categories that floods the plot with mobs.
+        switch (event.getSpawnReason()) {
+            case SPAWNER:
+            case SPAWNER_EGG:
+            case BREEDING:
+            case EGG:
+            case CUSTOM:
+            case BUILD_IRONGOLEM:
+            case BUILD_SNOWMAN:
+            case BUILD_WITHER:
+            case DISPENSE_EGG:
+            case CURED:
+            case SLIME_SPLIT:
+            case TRAP:
+            case SHOULDER_ENTITY:
+                return;
+            default:
+                break;
+        }
+
+        // Master switch first; if mob-spawning is off, nothing natural spawns.
+        if (!plot.getFlagValue(StandardFlags.MOB_SPAWNING)) {
+            event.setCancelled(true);
+            return;
+        }
+
+        // Then the more specific monster/animal toggles.
+        if (event.getEntity() instanceof Monster) {
+            if (!plot.getFlagValue(StandardFlags.MONSTER_SPAWNING)) {
+                event.setCancelled(true);
+            }
+        } else if (event.getEntity() instanceof Animals) {
+            if (!plot.getFlagValue(StandardFlags.ANIMAL_SPAWNING)) {
                 event.setCancelled(true);
             }
         }
@@ -653,7 +731,8 @@ public class BukkitPlotListener implements Listener {
     public void onEntityDamage(EntityDamageEvent event) {
         Location loc = BukkitUtil.adapt(event.getEntity().getLocation());
         if (manager.isPlotWorld(loc)) {
-            //Don't protect Monsters!
+            // Damage to monsters is never policed by plot rules -- you can
+            // always kill the zombie that wandered in.
             if (event.getEntity() instanceof Monster) {
                 return;
             }
@@ -662,13 +741,25 @@ public class BukkitPlotListener implements Listener {
                 EntityDamageByEntityEvent damageByEntityEvent = (EntityDamageByEntityEvent) event;
                 //Specific to Players to allow PVP. event.getEntity() is the damaged entity
                 if (event.getEntity() instanceof Player) {
-                    //Don't allow PVP on the roads. Only allow pvp if both entities are in the plot.
                     Plot plot = manager.getPlot(loc);
                     Plot plot2 = manager.getPlot(BukkitUtil.adapt(damageByEntityEvent.getDamager().getLocation()));
-                    if (plot == null) {
-                        event.setCancelled(true);
+
+                    // Hostile mob hits a player -> hostile-mob-attack flag.
+                    if (damageByEntityEvent.getDamager() instanceof Monster) {
+                        if (plot != null && !plot.getFlagValue(StandardFlags.HOSTILE_MOB_ATTACK)) {
+                            event.setCancelled(true);
+                        }
+                        return;
                     }
-                    if (plot2 == null) {
+
+                    // Player-vs-player. Honour the legacy "no PVP on roads"
+                    // rule, but additionally require the pvp flag on the
+                    // victim's plot.
+                    if (plot == null || plot2 == null) {
+                        event.setCancelled(true);
+                        return;
+                    }
+                    if (!plot.getFlagValue(StandardFlags.PVP)) {
                         event.setCancelled(true);
                     }
                 } else {
@@ -689,6 +780,218 @@ public class BukkitPlotListener implements Listener {
                     }
                     event.setCancelled(true);
                 }
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Per-plot flag handlers below. These are deliberately small and
+    // self-contained so individual flags can be disabled/edited without
+    // touching the rest of the listener.
+    // ------------------------------------------------------------------
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onBlockBurn(BlockBurnEvent event) {
+        Location location = BukkitUtil.adapt(event.getBlock().getLocation());
+        if (!manager.isPlotWorld(location)) {
+            return;
+        }
+        Plot plot = manager.getPlot(location);
+        if (plot == null) {
+            // Outside any plot (road) -- preserve the same "no burning" road
+            // semantics block-spread already enforces.
+            event.setCancelled(true);
+            return;
+        }
+        if (!plot.getFlagValue(StandardFlags.BLOCK_BURN)) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onLeavesDecay(LeavesDecayEvent event) {
+        Location location = BukkitUtil.adapt(event.getBlock().getLocation());
+        if (!manager.isPlotWorld(location)) {
+            return;
+        }
+        Plot plot = manager.getPlot(location);
+        if (plot == null) {
+            return; // road leaves can still decay
+        }
+        if (!plot.getFlagValue(StandardFlags.LEAF_DECAY)) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onPlayerDropItem(PlayerDropItemEvent event) {
+        Location location = BukkitUtil.adapt(event.getItemDrop().getLocation());
+        if (!manager.isPlotWorld(location)) {
+            return;
+        }
+        Plot plot = manager.getPlot(location);
+        if (plot == null) {
+            return;
+        }
+        // Owner is exempt; their own plot rules don't lock them out.
+        if (plot.getOwnerId().equals(event.getPlayer().getUniqueId())) {
+            return;
+        }
+        if (!plot.getFlagValue(StandardFlags.ITEM_DROP)) {
+            event.setCancelled(true);
+            event.getPlayer().sendMessage(api.C("CannotBuild"));
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onEntityPickupItem(EntityPickupItemEvent event) {
+        if (!(event.getEntity() instanceof Player)) {
+            return;
+        }
+        Player player = (Player) event.getEntity();
+        Location location = BukkitUtil.adapt(event.getItem().getLocation());
+        if (!manager.isPlotWorld(location)) {
+            return;
+        }
+        Plot plot = manager.getPlot(location);
+        if (plot == null) {
+            return;
+        }
+        if (plot.getOwnerId().equals(player.getUniqueId())) {
+            return;
+        }
+        if (!plot.getFlagValue(StandardFlags.ITEM_PICKUP)) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onPlayerToggleFlight(PlayerToggleFlightEvent event) {
+        // We only police the moment a player tries to *enter* flight.
+        // Letting them land is fine.
+        if (!event.isFlying()) {
+            return;
+        }
+        Player player = event.getPlayer();
+        // Creative / spectator can always fly -- the flag is about giving
+        // survival players flight on plots that allow it.
+        if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) {
+            return;
+        }
+        Location location = BukkitUtil.adapt(player.getLocation());
+        if (!manager.isPlotWorld(location)) {
+            return;
+        }
+        Plot plot = manager.getPlot(location);
+        if (plot == null) {
+            return;
+        }
+        if (!plot.getFlagValue(StandardFlags.FLY)) {
+            event.setCancelled(true);
+        }
+    }
+
+    /**
+     * Apply per-plot time / weather overrides as the player crosses plot
+     * boundaries. We compare the plot under the player's previous block
+     * coords to the plot under their new block coords to avoid running on
+     * every sub-block movement.
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPlayerMove(PlayerMoveEvent event) {
+        org.bukkit.Location from = event.getFrom();
+        org.bukkit.Location to = event.getTo();
+        if (to == null) {
+            return;
+        }
+        // Cheap fast-path: ignore sub-block movements -- the plot under us
+        // can't have changed.
+        if (from.getBlockX() == to.getBlockX()
+                && from.getBlockY() == to.getBlockY()
+                && from.getBlockZ() == to.getBlockZ()) {
+            return;
+        }
+        if (!manager.isPlotWorld(BukkitUtil.adapt(to))) {
+            // Walking out of a plot world; reset overrides if we previously
+            // applied any.
+            resetPlayerOverrides(event.getPlayer());
+            return;
+        }
+        Plot toPlot = manager.getPlot(BukkitUtil.adapt(to));
+        applyTimeAndWeather(event.getPlayer(), toPlot);
+    }
+
+    private void applyTimeAndWeather(Player player, Plot plot) {
+        if (plot == null) {
+            resetPlayerOverrides(player);
+            return;
+        }
+        int time = plot.getFlagValue(StandardFlags.TIME);
+        if (time < 0) {
+            player.resetPlayerTime();
+        } else {
+            // setPlayerTime(time, false) means "lock the client at this
+            // absolute tick of day" rather than offsetting from server time.
+            player.setPlayerTime(time, false);
+        }
+        String weather = plot.getFlagValue(StandardFlags.WEATHER);
+        switch (weather) {
+            case "clear":
+                player.setPlayerWeather(WeatherType.CLEAR);
+                break;
+            case "rain":
+            case "storm":
+                player.setPlayerWeather(WeatherType.DOWNFALL);
+                break;
+            case "unset":
+            default:
+                player.resetPlayerWeather();
+                break;
+        }
+    }
+
+    private void resetPlayerOverrides(Player player) {
+        player.resetPlayerTime();
+        player.resetPlayerWeather();
+    }
+
+    /**
+     * Apply the {@code use-deny} flag: even plot members are forbidden from
+     * right-clicking listed block types (think doors / chests / buttons the
+     * owner wants to keep private). Runs after the main interact handler so
+     * we don't second-guess existing CannotBuild messaging.
+     */
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void onInteractUseDeny(PlayerInteractEvent event) {
+        if (!event.hasBlock() || event.getAction() != org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
+        Location location = BukkitUtil.adapt(event.getClickedBlock().getLocation());
+        if (!manager.isPlotWorld(location)) {
+            return;
+        }
+        Plot plot = manager.getPlot(location);
+        if (plot == null) {
+            return;
+        }
+        // Plot owners and admins are exempt -- the flag is "deny *members*
+        // and visitors", not "deny everyone".
+        if (plot.getOwnerId().equals(event.getPlayer().getUniqueId())) {
+            return;
+        }
+        if (event.getPlayer().hasPermission(PermissionNames.ADMIN_BUILDANYWHERE)) {
+            return;
+        }
+        java.util.List<String> denied = plot.getFlagValue(StandardFlags.USE_DENY);
+        if (denied.isEmpty()) {
+            return;
+        }
+        String materialName = event.getClickedBlock().getType().name();
+        for (String entry : denied) {
+            if (entry.equalsIgnoreCase(materialName)) {
+                event.setCancelled(true);
+                event.getPlayer().sendMessage(api.C("CannotBuild"));
+                return;
             }
         }
     }
@@ -731,7 +1034,7 @@ public class BukkitPlotListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onSandCannon(EntityChangeBlockEvent event) {
         BukkitEntity entity = new BukkitEntity(event.getEntity());
-        if (manager.isPlotWorld(entity) && event.getEntityType().equals(EntityType.FALLING_BLOCK)) {
+        if (manager.isPlotWorld(entity) && event.getEntity() instanceof FallingBlock) {
             if (event.getTo().equals(Material.AIR)) {
                 entity.setMetadata("plotFallBlock", new FixedMetadataValue(plugin, event.getBlock().getLocation()));
             } else {
@@ -748,21 +1051,6 @@ public class BukkitPlotListener implements Listener {
                 }
             }
         }
-    }
-
-    @Subscribe(order = Order.FIRST)
-    public void onPlotCreateFirst(PlotCreateEvent event) {
-        api.getLogger().info("First Plot Create Event");
-    }
-
-    @Subscribe(order = Order.EARLY)
-    public void onPlotCreateEarly(PlotCreateEvent event) {
-        api.getLogger().info("Early Plot Create Event");
-    }
-
-    @Subscribe(order = Order.LATE)
-    public void onPlotWorldLoad(PlotCreateEvent event) {
-        api.getLogger().info("Late Plot Create Event");
     }
 
     @Subscribe
@@ -783,6 +1071,13 @@ public class BukkitPlotListener implements Listener {
 
         if (p != null) {
             manager.UpdatePlayerNameFromId(p.getUniqueId(), p.getName());
+            // If they logged in standing on a plot with time/weather flags
+            // set, apply those overrides now -- PlayerMoveEvent won't fire
+            // until they actually move.
+            Location loc = BukkitUtil.adapt(p.getLocation());
+            if (manager.isPlotWorld(loc)) {
+                applyTimeAndWeather(p, manager.getPlot(loc));
+            }
         }
     }
 
@@ -824,7 +1119,7 @@ public class BukkitPlotListener implements Listener {
     public void onCommand(PlayerCommandPreprocessEvent event) {
         if (event.getMessage().equalsIgnoreCase("/reload") || event.getMessage().equalsIgnoreCase("reload")) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage("PlotMe disabled /reload to prevent errors from occuring.");
+            event.getPlayer().sendMessage("§cPlotMe disabled /reload to prevent errors from occurring.");
         }
     }
 
@@ -832,7 +1127,7 @@ public class BukkitPlotListener implements Listener {
     public void onCommand(ServerCommandEvent event) {
         if (event.getCommand().equalsIgnoreCase("/reload") || event.getCommand().equalsIgnoreCase("reload")) {
             event.setCommand("");
-            event.getSender().sendMessage("PlotMe disabled /reload to prevent errors from occuring.");
+            event.getSender().sendMessage("§cPlotMe disabled /reload to prevent errors from occurring.");
         }
     }
 }

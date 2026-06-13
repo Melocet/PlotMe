@@ -1,8 +1,9 @@
 package com.worldcretornica.plotme_core.api.event;
 
-import com.google.common.base.Optional;
 import com.worldcretornica.plotme_core.Plot;
 import com.worldcretornica.plotme_core.api.ICommandSender;
+
+import java.util.Optional;
 
 public class PlotResetEvent extends PlotEvent implements ICancellable, Event {
 
@@ -11,7 +12,7 @@ public class PlotResetEvent extends PlotEvent implements ICancellable, Event {
 
     public PlotResetEvent(Plot plot, ICommandSender reseter) {
         super(plot);
-        this.reseter = Optional.fromNullable(reseter);
+        this.reseter = Optional.ofNullable(reseter);
     }
 
     @Override

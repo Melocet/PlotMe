@@ -1,10 +1,10 @@
 package com.worldcretornica.plotme.defaultgenerator;
 
-import org.bukkit.Chunk;
-import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.generator.BlockPopulator;
+import org.bukkit.generator.LimitedRegion;
+import org.bukkit.generator.WorldInfo;
 
 import java.util.Random;
 
@@ -23,13 +23,13 @@ public class DefaultRoadPopulator extends BlockPopulator {
     }
 
     @Override
-    public void populate(World world, Random rand, Chunk chunk) {
+    public void populate(WorldInfo worldInfo, Random rand, int chunkX, int chunkZ, LimitedRegion region) {
         BlockData wall      = MaterialParser.parseBlockData(wgc.getString(DefaultWorldConfigPath.UNCLAIMED_WALL.key(),  "44:7"));
         BlockData floorMain = MaterialParser.parseBlockData(wgc.getString(DefaultWorldConfigPath.ROAD_MAIN_BLOCK.key(), "5"));
         BlockData floorAlt  = MaterialParser.parseBlockData(wgc.getString(DefaultWorldConfigPath.ROAD_ALT_BLOCK.key(),  "5:2"));
 
-        int xx = chunk.getX() << 4;
-        int zz = chunk.getZ() << 4;
+        int xx = chunkX << 4;
+        int zz = chunkZ << 4;
 
         double size = plotSize + pathSize;
         double n1, n2, n3;
@@ -55,10 +55,10 @@ public class DefaultRoadPopulator extends BlockPopulator {
                         if ((z - i + mod1) % size == 0 || (z + i + mod2) % size == 0) { found = true; break; }
                     }
                     if (found) {
-                        set(world, x, roadHeight, z, floorMain);
+                        set(region,x, roadHeight, z, floorMain);
                     } else {
-                        set(world, x, roadHeight, z, floorMain);
-                        set(world, x, roadHeight + 1, z, wall);
+                        set(region,x, roadHeight, z, floorMain);
+                        set(region,x, roadHeight + 1, z, wall);
                     }
                 } else {
                     boolean found5 = false;
@@ -66,23 +66,23 @@ public class DefaultRoadPopulator extends BlockPopulator {
                         if ((x - i + mod1) % size == 0 || (x + i + mod2) % size == 0) { found5 = true; break; }
                     }
                     if (!found5 && ((z - n3 + mod1) % size == 0 || (z + n3 + mod2) % size == 0)) {
-                        set(world, x, roadHeight, z, floorMain);
-                        set(world, x, roadHeight + 1, z, wall);
+                        set(region,x, roadHeight, z, floorMain);
+                        set(region,x, roadHeight + 1, z, wall);
                     }
 
                     if ((x - n2 + mod1) % size == 0 || (x + n2 + mod2) % size == 0) {
                         if ((z - n3 + mod1) % size == 0 || (z + n3 + mod2) % size == 0
                                 || (z - n2 + mod1) % size == 0 || (z + n2 + mod2) % size == 0) {
-                            set(world, x, roadHeight, z, floorMain);
+                            set(region,x, roadHeight, z, floorMain);
                         } else {
-                            set(world, x, roadHeight, z, floorAlt);
+                            set(region,x, roadHeight, z, floorAlt);
                         }
                     } else if ((x - n1 + mod1) % size == 0 || (x + n1 + mod2) % size == 0) {
                         if ((z - n2 + mod1) % size == 0 || (z + n2 + mod2) % size == 0
                                 || (z - n1 + mod1) % size == 0 || (z + n1 + mod2) % size == 0) {
-                            set(world, x, roadHeight, z, floorAlt);
+                            set(region,x, roadHeight, z, floorAlt);
                         } else {
-                            set(world, x, roadHeight, z, floorMain);
+                            set(region,x, roadHeight, z, floorMain);
                         }
                     } else {
                         boolean found = false;
@@ -90,16 +90,16 @@ public class DefaultRoadPopulator extends BlockPopulator {
                             if ((z - i + mod1) % size == 0 || (z + i + mod2) % size == 0) { found = true; break; }
                         }
                         if (found) {
-                            set(world, x, roadHeight, z, floorMain);
+                            set(region,x, roadHeight, z, floorMain);
                         } else if ((z - n2 + mod1) % size == 0 || (z + n2 + mod2) % size == 0) {
-                            set(world, x, roadHeight, z, floorAlt);
+                            set(region,x, roadHeight, z, floorAlt);
                         } else {
                             boolean found3 = false;
                             for (double i = n3; i >= 0; i--) {
                                 if ((x - i + mod1) % size == 0 || (x + i + mod2) % size == 0) { found3 = true; break; }
                             }
                             if (found3) {
-                                set(world, x, roadHeight, z, floorMain);
+                                set(region,x, roadHeight, z, floorMain);
                             }
                         }
                     }
@@ -108,7 +108,9 @@ public class DefaultRoadPopulator extends BlockPopulator {
         }
     }
 
-    private void set(World w, int x, int y, int z, BlockData data) {
-        w.getBlockAt(x, y, z).setBlockData(data, false);
+    private void set(LimitedRegion region, int x, int y, int z, BlockData data) {
+        if (region.isInRegion(x, y, z)) {
+            region.setBlockData(x, y, z, data);
+        }
     }
 }

@@ -29,6 +29,6 @@ public class CmdReload extends PlotCommand {
 
     @Override
     public String getUsage() {
-        return C("CmdRemoveUsage");
+        return C("CmdReloadUsage");
     }
 }

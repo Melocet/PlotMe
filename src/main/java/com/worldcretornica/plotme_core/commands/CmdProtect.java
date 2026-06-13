@@ -56,7 +56,7 @@ public class CmdProtect extends PlotCommand {
                     } else {
                         double cost = pmi.getProtectPrice();
                         if (manager.isEconomyEnabled(pmi)) {
-                            if (serverBridge.has(player, cost)) {
+                            if (!serverBridge.has(player, cost)) {
                                 player.sendMessage(C("MsgNotEnoughProtectPlot"));
                                 return true;
                             } else {
@@ -66,7 +66,9 @@ public class CmdProtect extends PlotCommand {
                                     EconomyResponse er = serverBridge.withdrawPlayer(player, cost);
 
                                     if (!er.transactionSuccess()) {
-                                        player.sendMessage(er.errorMessage);
+                                        // Economy plugin error -- color it red to match every other
+                                        // economy failure message in PlotMe (CmdHome, CmdDeny, etc.).
+                                        player.sendMessage("§c" + er.errorMessage);
                                         serverBridge.getLogger().warning(er.errorMessage);
                                         return true;
                                     }

@@ -11,9 +11,19 @@ public class BukkitCommandSender implements ICommandSender {
         commandsender = sender;
     }
 
+    /**
+     * Sends a message to the wrapped command sender (console or player).
+     *
+     * <p>Like {@link BukkitPlayer#sendMessage(String)}, this is a canonical
+     * chat boundary for PlotMe-generated output -- it automatically prepends
+     * the "[PlotMe]" prefix on every line via {@link PlotMessagePrefix#apply}.
+     * Call sites MUST NOT add their own "[PlotMe]" prefix; if they do, the
+     * prefix helper is idempotent and will skip them, but the convention is
+     * still "prefix only at the send boundary".
+     */
     @Override
     public void sendMessage(String message) {
-        commandsender.sendMessage(message);
+        commandsender.sendMessage(PlotMessagePrefix.apply(message));
     }
 
     public CommandSender getCommandSender() {

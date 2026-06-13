@@ -1,10 +1,10 @@
 package com.worldcretornica.plotme.defaultgenerator;
 
-import org.bukkit.Chunk;
-import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.generator.BlockPopulator;
+import org.bukkit.generator.LimitedRegion;
+import org.bukkit.generator.WorldInfo;
 
 import java.util.Random;
 
@@ -23,12 +23,12 @@ public class DefaultContentPopulator extends BlockPopulator {
     }
 
     @Override
-    public void populate(World world, Random rand, Chunk chunk) {
+    public void populate(WorldInfo worldInfo, Random rand, int chunkX, int chunkZ, LimitedRegion region) {
         BlockData plotFloor = MaterialParser.parseBlockData(wgc.getString(DefaultWorldConfigPath.PLOT_FLOOR_BLOCK.key(), "2"));
         BlockData filling   = MaterialParser.parseBlockData(wgc.getString(DefaultWorldConfigPath.FILL_BLOCK.key(),       "3"));
 
-        int xx = chunk.getX() << 4;
-        int zz = chunk.getZ() << 4;
+        int xx = chunkX << 4;
+        int zz = chunkZ << 4;
 
         double size = plotSize + pathSize;
 
@@ -48,11 +48,14 @@ public class DefaultContentPopulator extends BlockPopulator {
 
                 boolean modZ = valz < plotSize;
 
-                for (int y = world.getMinHeight() + 1; y <= roadHeight; y++) {
+                for (int y = worldInfo.getMinHeight() + 1; y <= roadHeight; y++) {
+                    if (!region.isInRegion(x, y, z)) {
+                        continue;
+                    }
                     if (y < roadHeight) {
-                        world.getBlockAt(x, y, z).setBlockData(filling, false);
+                        region.setBlockData(x, y, z, filling);
                     } else if (modX && modZ) {
-                        world.getBlockAt(x, y, z).setBlockData(plotFloor, false);
+                        region.setBlockData(x, y, z, plotFloor);
                     }
                 }
             }

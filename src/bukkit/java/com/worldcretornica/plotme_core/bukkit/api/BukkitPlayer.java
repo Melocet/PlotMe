@@ -20,14 +20,36 @@ public class BukkitPlayer extends BukkitOfflinePlayer implements IPlayer {
     }
 
     /**
-     * Sends this sender a message
+     * Sends this sender a message.
+     *
+     * <p><b>Prefix contract:</b> this method is the canonical chat boundary
+     * for player-bound messages from PlotMe. It automatically prepends a
+     * "[PlotMe]" tag to every line of {@code message}. Call sites MUST NOT
+     * add their own "[PlotMe]" prefix -- {@link PlotMessagePrefix#apply} is
+     * idempotent (skips already-prefixed input) but the wider codebase should
+     * stay clean. If the cached {@code use-legacy-texts} flag is set the
+     * prefix is rendered plain ("[PlotMe] "); otherwise it uses the colored
+     * variant "§6[§ePlotMe§6]§r ". Multi-line messages get the prefix on
+     * every line, not just the first.
      *
      * @param message Message to be displayed
      */
 
     @Override
     public void sendMessage(String message) {
-        player.sendMessage(message);
+        player.sendMessage(PlotMessagePrefix.apply(message));
+    }
+
+    @Override
+    public void playSound(String soundName, float volume, float pitch) {
+        if (soundName == null || soundName.isEmpty()) return;
+        // Paper 1.21+ accepts the raw namespaced/colon key in the String overload,
+        // which avoids the deprecated Sound enum lookup entirely.
+        try {
+            player.playSound(player.getLocation(), soundName.toLowerCase().replace('_', '.'), volume, pitch);
+        } catch (Throwable ignored) {
+            // Unknown sound key — silently skip rather than crash the command.
+        }
     }
 
     @Override
@@ -59,7 +81,10 @@ public class BukkitPlayer extends BukkitOfflinePlayer implements IPlayer {
      */
     @Override public void teleport(Location location, PlotMe_Core plugin) {
         if (plugin.getConfig().getInt("tp-delay") != 0) {
-            player.sendMessage(String.format("You will be teleported in %d seconds.", plugin.getConfig().getInt("tp-delay")));
+            // Route through our own sendMessage so this message also gets the
+            // canonical "[PlotMe]" prefix -- otherwise the tp-delay notice
+            // would be the one chat string in the plugin without the tag.
+            sendMessage(String.format("§eYou will be teleported in §b%d§e seconds.", plugin.getConfig().getInt("tp-delay")));
             plugin.getServerBridge().runTaskLater(new TeleportRunnable(this, location), plugin.getConfig().getInt("tp-delay"));
         } else {
             setLocation(location);

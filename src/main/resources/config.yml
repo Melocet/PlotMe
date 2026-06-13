@@ -1,3 +1,10 @@
+# When false (default), captions/messages support Bukkit-style color codes
+# using '&' (e.g. &a green, &c red, &e yellow, &b aqua, &7 gray, &l bold).
+# They are translated to '§' at send-time, producing colored chat output.
+# When true (legacy), color codes are stripped from all messages so players
+# see plain text -- this matches PlotMe's pre-color behavior.
+use-legacy-texts: false
+
 usemySQL: false
 mySQLconn: jdbc:mysql://localhost:3306/minecraft
 mySQLuname: root
@@ -5,12 +12,33 @@ mySQLpass: password
 globalUseEconomy: false
 allowWorldTeleport: true
 disableWildCard: false
-defaultWEAnywhere: true
+defaultWEAnywhere: false
 NbClearSpools: 3
 NbBlocksPerClearStep: 50000
 AdvancedLogging: false
 PlotEnterAnnouncement: false
-Version: 0.17.4
 ExpirePlotCleanup: false
 ExpirePlotCleanupTimer: 90
 tp-delay: 0
+autoSpiralMax: 50
+
+# Cost (Vault currency) the player must pay to /plotme merge two of their
+# own adjacent plots. Only charged when economy is enabled for the world the
+# command is run in. Set to 0 (or anything <= 0) to make merging free.
+mergeCost: 100.0
+
+# Master switch for the /plotme merge command. Set false to disable plot
+# merging entirely (the command will respond with a friendly message). Keeps
+# the rest of the plugin behaviour intact — only the merge feature is gated.
+merge-enabled: true
+
+# Maximum number of plots that can belong to one merged cluster.
+merge-max: 4
+
+# Web-map marker integration. Each backend self-disables if its plugin isn't
+# installed, so leaving both `true` on a vanilla server is harmless.
+webmap:
+  bluemap: true
+  squaremap: true
+  # Hex RGB. Used for the marker fill and outline.
+  marker-color: '#FFA500'

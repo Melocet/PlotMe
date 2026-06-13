@@ -1,10 +1,10 @@
 package com.worldcretornica.plotme_core.commands;
 
-import com.google.common.collect.Lists;
 import com.worldcretornica.plotme_core.PermissionNames;
 import com.worldcretornica.plotme_core.PlotMe_Core;
 import com.worldcretornica.plotme_core.api.ICommandSender;
 import com.worldcretornica.plotme_core.api.IPlayer;
+import com.worldcretornica.plotme_core.utils.ListPartition;
 
 import java.util.List;
 
@@ -23,14 +23,14 @@ public class CmdBiomes extends PlotCommand {
         if (manager.isPlotWorld(player)) {
             if (player.hasPermission(PermissionNames.USER_BIOME)) {
                 int page = 1;
-                List<List<String>> partition = Lists.partition(serverBridge.getBiomes(), 10);
+                List<List<String>> partition = ListPartition.partition(serverBridge.getBiomes(), 10);
                 if (args.length == 2) {
                     page = Integer.parseInt(args[1]);
                 }
 
-                player.sendMessage(C("WordBiomes") + " (" + page + "/" + partition.size() + ") : ");
+                player.sendMessage(C("WordBiomes") + " §7(§f" + page + "§7/§f" + partition.size() + "§7) : §r");
                 for (String s : partition.get(page - 1)) {
-                    player.sendMessage(s);
+                    player.sendMessage("§f" + s);
                 }
             } else {
                 return false;

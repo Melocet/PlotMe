@@ -27,7 +27,7 @@ public class CmdUndeny extends PlotCommand {
             return true;
         }
         if ("*".equals(args[1]) && plugin.getConfig().getBoolean("disableWildCard")) {
-            sender.sendMessage("Wildcards are disabled.");
+            sender.sendMessage("§cWildcards are disabled.");
             return true;
         }
 
@@ -48,7 +48,7 @@ public class CmdUndeny extends PlotCommand {
                     }
                     IOfflinePlayer offlinePlayer = serverBridge.getOfflinePlayer(denied);
                     if (offlinePlayer == null) {
-                        player.sendMessage("An error occured while trying to remove " + args[1]);
+                        player.sendMessage("§cAn error occured while trying to remove §b" + args[1] + "§r");
                         return true;
                     } else {
                         denied = offlinePlayer.getUniqueId().toString();
@@ -68,13 +68,13 @@ public class CmdUndeny extends PlotCommand {
                                     EconomyResponse er = serverBridge.withdrawPlayer(player, price);
 
                                     if (!er.transactionSuccess()) {
-                                        player.sendMessage(er.errorMessage);
+                                        player.sendMessage("§c" + er.errorMessage);
                                         serverBridge.getLogger().warning(er.errorMessage);
                                         return true;
                                     }
                                 }
                             } else {
-                                player.sendMessage("It costs " + serverBridge.getEconomy().get().format(price) + " to undeny a player from the "
+                                player.sendMessage("§eIt costs §b" + serverBridge.getEconomy().get().format(price) + "§e to undeny a player from the "
                                         + "plot.");
                                 return true;
                             }
@@ -85,8 +85,8 @@ public class CmdUndeny extends PlotCommand {
                         if (!event.isCancelled()) {
                             plot.removeDenied(denied);
                             plugin.getSqlManager().savePlot(plot);
-                            player.sendMessage(args[1] + " " + C("MsgNowUndenied") + " " + serverBridge.getEconomy().get().format
-                                            (price));
+                            player.sendMessage("§b" + args[1] + "§r " + C("MsgNowUndenied") + " §a" + serverBridge.getEconomy().get().format
+                                            (price) + "§r");
 
                             if (isAdvancedLogging()) {
                                 if (price != 0) {
@@ -102,10 +102,10 @@ public class CmdUndeny extends PlotCommand {
                             }
                         }
                     } else {
-                        player.sendMessage(args[1] + " " + C("MsgWasNotDenied"));
+                        player.sendMessage("§b" + args[1] + "§r " + C("MsgWasNotDenied"));
                     }
                 } else {
-                    player.sendMessage(C("MsgThisPlot") + " (" + plot.getId().getID() + ") " + C("MsgNotYoursNotAllowedUndeny"));
+                    player.sendMessage(C("MsgThisPlot") + " §7(§b" + plot.getId().getID() + "§7) §r" + C("MsgNotYoursNotAllowedUndeny"));
                 }
             } else {
                 player.sendMessage(C("NotPlotWorld"));
@@ -129,7 +129,7 @@ public class CmdUndeny extends PlotCommand {
                         EconomyResponse er = serverBridge.withdrawPlayer(player, price);
 
                         if (!er.transactionSuccess()) {
-                            player.sendMessage(er.errorMessage);
+                            player.sendMessage("§c" + er.errorMessage);
                             serverBridge.getLogger().warning(er.errorMessage);
                             return true;
                         }
@@ -137,7 +137,7 @@ public class CmdUndeny extends PlotCommand {
                         return true;
                     }
                 } else {
-                    player.sendMessage("It costs " + serverBridge.getEconomy().get().format(price) + " to undeny a player from the plot.");
+                    player.sendMessage("§eIt costs §b" + serverBridge.getEconomy().get().format(price) + "§e to undeny a player from the plot.");
                     return true;
                 }
             } else {
@@ -147,7 +147,7 @@ public class CmdUndeny extends PlotCommand {
             if (!event.isCancelled()) {
                 plot.removeAllDenied();
                 plugin.getSqlManager().savePlot(plot);
-                player.sendMessage("Undenied all players from the plot.");
+                player.sendMessage("§aUndenied all players from the plot.");
                 return true;
             }
 

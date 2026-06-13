@@ -1,6 +1,5 @@
 package com.worldcretornica.plotme_core.bukkit;
 
-import com.google.common.base.Optional;
 import com.sk89q.worldedit.WorldEdit;
 import com.worldcretornica.plotme_core.api.IOfflinePlayer;
 import com.worldcretornica.plotme_core.api.IPlayer;
@@ -8,6 +7,7 @@ import com.worldcretornica.plotme_core.api.IServerBridge;
 import com.worldcretornica.plotme_core.api.IWorld;
 import com.worldcretornica.plotme_core.bukkit.api.BukkitOfflinePlayer;
 import com.worldcretornica.plotme_core.bukkit.api.BukkitWorld;
+import com.worldcretornica.plotme_core.bukkit.integration.WebMapDispatcher;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
@@ -17,7 +17,6 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.io.InputStreamReader;
@@ -25,16 +24,34 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Logger;
 
 public class BukkitServerBridge extends IServerBridge {
 
     private final PlotMe_CorePlugin plotMeCorePlugin;
+    private WebMapDispatcher webMapDispatcher;
 
     public BukkitServerBridge(PlotMe_CorePlugin plotMeCorePlugin, Logger logger) {
         super(logger);
         this.plotMeCorePlugin = plotMeCorePlugin;
+    }
+
+    /**
+     * @return the web-map marker dispatcher, or {@code null} if {@link #setupHooks()}
+     *         hasn't run yet. Used by {@link com.worldcretornica.plotme_core.PlotMe_Core#reload()}
+     *         to repopulate markers after config changes.
+     */
+    public WebMapDispatcher getWebMapDispatcher() {
+        return webMapDispatcher;
+    }
+
+    @Override
+    public void refreshWebMapMarkers() {
+        if (webMapDispatcher != null) {
+            webMapDispatcher.refreshAll();
+        }
     }
 
     @Override
@@ -76,7 +93,12 @@ public class BukkitServerBridge extends IServerBridge {
             WorldEdit.getInstance().getEventBus().register(new PlotWorldEditListener(plotMeCorePlugin.getAPI()));
         }
 
-        setUsingLwc(pluginManager.getPlugin("LWC") != null);
+        // Web-map markers (BlueMap + squaremap). Each hook self-disables when
+        // its backing plugin is missing — no version checks needed here.
+        webMapDispatcher = new WebMapDispatcher(plotMeCorePlugin.getAPI(), getLogger());
+        if (webMapDispatcher.anyAvailable()) {
+            plotMeCorePlugin.getAPI().getEventBus().register(webMapDispatcher);
+        }
     }
 
     /**
@@ -89,12 +111,12 @@ public class BukkitServerBridge extends IServerBridge {
         if (economyProvider != null) {
             return Optional.of(economyProvider.getProvider());
         }
-        return Optional.absent();
+        return Optional.empty();
     }
 
     @Override
     public void runTaskAsynchronously(Runnable runnable) {
-        BukkitTask bukkitTask = Bukkit.getScheduler().runTaskAsynchronously(plotMeCorePlugin, runnable);
+        Bukkit.getScheduler().runTaskAsynchronously(plotMeCorePlugin, runnable);
     }
 
     @Override
@@ -194,83 +216,6 @@ public class BukkitServerBridge extends IServerBridge {
 
         return worlds;
     }
-
-/*
-    @Override
-    public boolean createPlotWorld(String worldName, String generator, Map<String, String> args) {
-        //Get a seed
-        long seed = new Random().nextLong();
-
-        //Check if we have multiverse
-        if (getMultiverse() == null && Bukkit.getPluginManager().isPluginEnabled("Multiverse-Core")) {
-            setMultiverse((JavaPlugin) Bukkit.getPluginManager().getPlugin("Multiverse-Core"));
-        }
-
-        //Do we have one of them
-        if (getMultiverse() == null) {
-            getLogger().info(plugin.getAPI().getUtil().C("ErrWorldPluginNotFound"));
-            return false;
-        }
-
-        //Find generator
-       */
-/* IPlotMe_ChunkGenerator plotMeGenerator = plugin.getServerObjectBuilder().getPlotMeGenerator(generator, worldName);
-
-        //Make generator create settings
-        if (plotMeGenerator == null) {
-            getLogger().info(plugin.getAPI().getUtil().C("ErrCannotFindWorldGen") + " '" + generator + "'");
-            return false;
-        }
-        if (!plotMeGenerator.getManager().createFile(worldName, args)) { //Create the generator configurations
-            getLogger().info(plugin.getAPI().getUtil().C("ErrCannotCreateGen1") + " '" + generator + "' " + plugin.getAPI().getUtil()
-                    .C("ErrCannotCreateGen2"));
-            return false;
-        }*//*
-
-
-        PlotMapInfo tempPlotInfo = new PlotMapInfo(plugin.getAPI(), config, worldName);
-
-        tempPlotInfo.setPlotAutoLimit(Integer.parseInt(args.get("PlotAutoLimit")));
-        tempPlotInfo.setDaysToExpiration(Integer.parseInt(args.get("DaysToExpiration")));
-        //tempPlotInfo.setAutoLinkPlots(Boolean.parseBoolean(args.get("AutoLinkPlots")));
-        tempPlotInfo.setDisableExplosion(Boolean.parseBoolean(args.get("DisableExplosion")));
-        tempPlotInfo.setDisableIgnition(Boolean.parseBoolean(args.get("DisableIgnition")));
-        tempPlotInfo.setUseEconomy(Boolean.parseBoolean(args.get("UseEconomy")));
-        tempPlotInfo.setCanPutOnSale(Boolean.parseBoolean(args.get("CanPutOnSale")));
-        tempPlotInfo.setRefundClaimPriceOnReset(Boolean.parseBoolean(args.get("RefundClaimPriceOnReset")));
-        tempPlotInfo.setRefundClaimPriceOnSetOwner(Boolean.parseBoolean(args.get("RefundClaimPriceOnSetOwner")));
-        tempPlotInfo.setClaimPrice(Double.parseDouble(args.get("ClaimPrice")));
-        tempPlotInfo.setClearPrice(Double.parseDouble(args.get("ClearPrice")));
-        tempPlotInfo.setAddPlayerPrice(Double.parseDouble(args.get("AddPlayerPrice")));
-        tempPlotInfo.setDenyPlayerPrice(Double.parseDouble(args.get("DenyPlayerPrice")));
-        tempPlotInfo.setRemovePlayerPrice(Double.parseDouble(args.get("RemovePlayerPrice")));
-        tempPlotInfo.setUndenyPlayerPrice(Double.parseDouble(args.get("UndenyPlayerPrice")));
-        tempPlotInfo.setPlotHomePrice(Double.parseDouble(args.get("PlotHomePrice")));
-        tempPlotInfo.setSellToPlayerPrice(Double.parseDouble(args.get("SellToPlayerPrice")));
-        tempPlotInfo.setBiomeChangePrice(Double.parseDouble(args.get("BiomeChangePrice")));
-        tempPlotInfo.setProtectPrice(Double.parseDouble(args.get("ProtectPrice")));
-        tempPlotInfo.setDisposePrice(Double.parseDouble(args.get("DisposePrice")));
-
-        PlotMeCoreManager.getInstance().addPlotMap(worldName, tempPlotInfo);
-
-        //Are we using multiverse?
-        if (getMultiverse() != null) {
-            boolean success = false;
-            if (getMultiverse().isEnabled()) {
-                success = plugin.getServerObjectBuilder().addMultiverseWorld(worldName, String.valueOf(seed), generator);
-
-                if (!success) {
-                    getLogger().info(plugin.getAPI().getUtil().C("ErrCannotCreateMV"));
-                }
-            } else {
-                getLogger().info(plugin.getAPI().getUtil().C("ErrMVDisabled"));
-            }
-            return success;
-        }
-
-        return false;
-    }
-*/
 
     public void clearBukkitPlayerMap() {
         PlotMe_CorePlugin.getInstance().getBukkitPlayerMap().clear();

@@ -1,6 +1,7 @@
 package com.worldcretornica.plotme_core.api;
 
 import com.worldcretornica.plotme_core.PlotMe_Core;
+import com.worldcretornica.plotme_core.commands.CmdAccess;
 import com.worldcretornica.plotme_core.commands.CmdAdd;
 import com.worldcretornica.plotme_core.commands.CmdAddTime;
 import com.worldcretornica.plotme_core.commands.CmdAuto;
@@ -14,9 +15,12 @@ import com.worldcretornica.plotme_core.commands.CmdDispose;
 import com.worldcretornica.plotme_core.commands.CmdDone;
 import com.worldcretornica.plotme_core.commands.CmdDoneList;
 import com.worldcretornica.plotme_core.commands.CmdExpired;
+import com.worldcretornica.plotme_core.commands.CmdFlag;
 import com.worldcretornica.plotme_core.commands.CmdHome;
 import com.worldcretornica.plotme_core.commands.CmdInfo;
 import com.worldcretornica.plotme_core.commands.CmdLike;
+import com.worldcretornica.plotme_core.commands.CmdMenu;
+import com.worldcretornica.plotme_core.commands.CmdMerge;
 import com.worldcretornica.plotme_core.commands.CmdMiddle;
 import com.worldcretornica.plotme_core.commands.CmdMove;
 import com.worldcretornica.plotme_core.commands.CmdPlotList;
@@ -43,6 +47,7 @@ public class CommandExBase {
 
     protected CommandExBase(PlotMe_Core api) {
         this.api = api;
+        registerCommand(new CmdAccess(api));
         registerCommand(new CmdAdd(api));
         registerCommand(new CmdAddTime(api));
         registerCommand(new CmdAuto(api));
@@ -56,8 +61,11 @@ public class CommandExBase {
         registerCommand(new CmdDone(api));
         registerCommand(new CmdDoneList(api));
         registerCommand(new CmdExpired(api));
+        registerCommand(new CmdFlag(api));
         registerCommand(new CmdHome(api));
         registerCommand(new CmdInfo(api));
+        registerCommand(new CmdMenu(api));
+        registerCommand(new CmdMerge(api));
         registerCommand(new CmdMove(api));
         registerCommand(new CmdPlotList(api));
         registerCommand(new CmdProtect(api));

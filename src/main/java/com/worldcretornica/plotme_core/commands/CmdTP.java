@@ -47,9 +47,24 @@ public class CmdTP extends PlotCommand {
                         world = manager.getFirstWorld();
                     }
 
+                    // getFirstWorld() now returns null on a fresh server with
+                    // no plot worlds registered. Tell the admin instead of
+                    // letting isPlotWorld(null) silently fall through.
+                    if (world == null) {
+                        player.sendMessage(C("MsgNoPlotWorldSetup"));
+                        return true;
+                    }
+
                     if (PlotId.isValidID(args[1])) {
                         PlotId id2 = new PlotId(args[1]);
                         if (manager.isPlotWorld(world)) {
+                            // Guard the resolved plot world against the
+                            // gen-manager registration race so getPlotHome
+                            // below cannot NPE.
+                            if (manager.getGenManager(world) == null) {
+                                player.sendMessage(C("MsgNoPlotWorldSetup"));
+                                return true;
+                            }
                             Location location = manager.getPlotHome(id2, player.getWorld());
                             Plot plot = manager.getPlotById(id2, world);
                             PlotTeleportEvent event = new PlotTeleportEvent(plot, player, location, id2);

@@ -31,7 +31,7 @@ public class CmdRemove extends PlotCommand {
             return true;
         }
         if ("*".equals(args[1]) && plugin.getConfig().getBoolean("disableWildCard")) {
-            sender.sendMessage("Wildcards are disabled.");
+            sender.sendMessage("§cWildcards are disabled.");
             return true;
         }
         IPlayer player = (IPlayer) sender;
@@ -55,7 +55,7 @@ public class CmdRemove extends PlotCommand {
                         } else {
                             IOfflinePlayer offlinePlayer = serverBridge.getOfflinePlayer(args[1]);
                             if (offlinePlayer == null) {
-                                player.sendMessage("An error occured while trying to remove " + args[1]);
+                                player.sendMessage("§cAn error occured while trying to remove §b" + args[1] + "§r");
                                 return true;
                             } else {
                                 allowed = offlinePlayer.getUniqueId().toString();
@@ -74,14 +74,14 @@ public class CmdRemove extends PlotCommand {
                                     EconomyResponse er = serverBridge.withdrawPlayer(player, price);
 
                                     if (!er.transactionSuccess()) {
-                                        player.sendMessage(er.errorMessage);
+                                        player.sendMessage("§c" + er.errorMessage);
                                         serverBridge.getLogger().warning(er.errorMessage);
                                         return true;
                                     }
                                 } else {
-                                    player.sendMessage(C("MsgNotEnoughRemove") + " " + C("WordMissing") + " " + serverBridge.getEconomy().get()
+                                    player.sendMessage(C("MsgNotEnoughRemove") + " " + C("WordMissing") + " §b" + serverBridge.getEconomy().get()
                                             .format(
-                                                    price));
+                                                    price) + "§r");
                                     return true;
                                 }
                             }
@@ -92,8 +92,8 @@ public class CmdRemove extends PlotCommand {
                                 } else {
                                     plot.removeMembers(allowed);
                                 }
-                                player.sendMessage(args[1] + " " + C("WordRemoved") + ". " + serverBridge.getEconomy().get().format
-                                                (price));
+                                player.sendMessage("§b" + args[1] + "§r " + C("WordRemoved") + ". §b" + serverBridge.getEconomy().get().format
+                                                (price) + "§r");
                                 plugin.getSqlManager().savePlot(plot);
 
                                 if (isAdvancedLogging()) {
@@ -105,7 +105,7 @@ public class CmdRemove extends PlotCommand {
                             player.sendMessage(C("WasNotAMember",args[1]));
                         }
                     } else {
-                        player.sendMessage(C("MsgThisPlot") + "(" + plot.getId() + ") " + C("MsgNotYoursNotAllowedRemove"));
+                        player.sendMessage(C("MsgThisPlot") + "§7(§b" + plot.getId() + "§7) §r" + C("MsgNotYoursNotAllowedRemove"));
                     }
                 }
             } else {

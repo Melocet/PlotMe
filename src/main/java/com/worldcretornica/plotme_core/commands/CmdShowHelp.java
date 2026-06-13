@@ -108,7 +108,7 @@ public class CmdShowHelp extends PlotCommand {
             }
         }
 
-        int maxPage = (int) Math.ceil(allowed_commands.size() / 4);
+        int maxPage = (int) Math.ceil(allowed_commands.size() / 4.0);
 
         page = Math.min(maxPage, Math.max(1, page));
 
@@ -133,6 +133,15 @@ public class CmdShowHelp extends PlotCommand {
                 } else if (plugin.getConfig().getBoolean("allowWorldTeleport")) {
 
                     IWorld world = manager.getFirstWorld();
+
+                    // Fresh server with no plot worlds at all: getFirstWorld()
+                    // now returns null instead of throwing ArrayIndexOutOfBounds
+                    // on an empty keySet. Tell the player how to fix it rather
+                    // than silently swallowing the page render.
+                    if (world == null) {
+                        player.sendMessage(C("MsgNoPlotWorldSetup"));
+                        return true;
+                    }
 
                     int ownedPlots = manager.getOwnedPlotCount(((IPlayer) player).getUniqueId(), world);
 

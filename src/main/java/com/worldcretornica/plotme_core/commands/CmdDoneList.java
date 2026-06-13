@@ -1,11 +1,11 @@
 package com.worldcretornica.plotme_core.commands;
 
-import com.google.common.collect.Lists;
 import com.worldcretornica.plotme_core.PermissionNames;
 import com.worldcretornica.plotme_core.Plot;
 import com.worldcretornica.plotme_core.PlotMe_Core;
 import com.worldcretornica.plotme_core.api.ICommandSender;
 import com.worldcretornica.plotme_core.api.IPlayer;
+import com.worldcretornica.plotme_core.utils.ListPartition;
 
 import java.util.List;
 
@@ -30,7 +30,7 @@ public class CmdDoneList extends PlotCommand {
                     page = Integer.parseInt(args[1]);
                 }
 
-                List<List<Plot>> partition = Lists.partition(plugin.getSqlManager().getFinishedPlots(player.getWorld()), 10);
+                List<List<Plot>> partition = ListPartition.partition(plugin.getSqlManager().getFinishedPlots(player.getWorld()), 10);
 
                 if (partition.isEmpty()) {
                     player.sendMessage(C("NoFinishedPlots"));
@@ -38,7 +38,7 @@ public class CmdDoneList extends PlotCommand {
                     player.sendMessage(C("MsgFinishedPlotsPage", page, partition.size()));
 
                     for (Plot plot : partition.get(page - 1)) {
-                        player.sendMessage(plot.getId() + " -> " + plot.getOwner() + " @ " + plot.getFinishedDate());
+                        player.sendMessage("§b" + plot.getId() + "§7 -> §f" + plot.getOwner() + "§7 @ §a" + plot.getFinishedDate() + "§r");
                     }
                 }
             } else {

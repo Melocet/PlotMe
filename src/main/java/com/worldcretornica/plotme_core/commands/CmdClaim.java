@@ -28,6 +28,16 @@ public class CmdClaim extends PlotCommand {
             IWorld world = player.getWorld();
             PlotMapInfo pmi = manager.getMap(world);
             if (manager.isPlotWorld(world)) {
+                // Belt + suspenders against the same registration race that
+                // hits CmdAuto: if the plot world is in the PlotMapInfo map
+                // but the gen manager hasn't been registered yet, getPlotId
+                // would return null (handled below) but downstream
+                // isPlotAvailable / createPlot calls would NPE on the
+                // missing gen manager. Bail with a friendly message.
+                if (manager.getGenManager(world) == null) {
+                    player.sendMessage(C("MsgNoPlotWorldSetup"));
+                    return true;
+                }
                 PlotId id = manager.getPlotId(player);
 
                 if (id == null) {
@@ -44,7 +54,7 @@ public class CmdClaim extends PlotCommand {
                         player.sendMessage(C("InvalidCommandInput"));
                     }
                     if (serverBridge.getPlayer(args[1]) == null) {
-                        player.sendMessage("No player found by that name.");
+                        player.sendMessage(C("MsgNoPlayerFoundByName"));
                         return true;
                     } else {
                         futurePlotOwner = serverBridge.getPlayer(args[1]);
@@ -74,13 +84,13 @@ public class CmdClaim extends PlotCommand {
                             EconomyResponse er = serverBridge.withdrawPlayer(player, price);
 
                             if (!er.transactionSuccess()) {
-                                player.sendMessage(er.errorMessage);
+                                player.sendMessage("§c" + er.errorMessage);
                                 serverBridge.getLogger().warning(er.errorMessage);
                                 return true;
                             }
                         } else {
                             player.sendMessage(
-                                    C("MsgNotEnoughBuy") + " " + C("WordMissing") + " " + serverBridge.getEconomy().get().format(price));
+                                    C("MsgNotEnoughBuy") + " " + C("WordMissing") + " §b" + serverBridge.getEconomy().get().format(price) + "§r");
                             return true;
                         }
                     } else {
@@ -90,14 +100,20 @@ public class CmdClaim extends PlotCommand {
                     if (!event.isCancelled()) {
                         Plot plot = manager.createPlot(id, world, player.getName(), player.getUniqueId(), pmi);
 
-                        //plugin.getPlotMeCoreManager().adjustLinkedPlots(id, world);
+                        // Auto-link on claim is intentionally disabled. Merging is manual
+                        // only: the owner must run /plotme merge <direction> explicitly.
+                        // The previous AutoLinkPlots-driven adjustLinkedPlots call has been
+                        // removed so /plotme claim never folds neighbouring plots into a
+                        // cluster on its own. CmdMerge remains the supported path.
                         if (player.getUniqueId().equals(futurePlotOwner.getUniqueId())) {
                             player.sendMessage(
-                                    C("MsgThisPlotYours") + " " + C("WordUse") + " /plotme home " + C("MsgToGetToIt"));
+                                    C("MsgThisPlotYours") + " " + C("WordUse") + " §b/plotme home §r" + C("MsgToGetToIt"));
                         } else {
-                            player.sendMessage(C("MsgThisPlotIsNow") + " " + player.getName() + ". " + C("WordUse")
-                                    + " /plotme home " + C("MsgToGetToIt"));
+                            player.sendMessage(C("MsgThisPlotIsNow") + " §b" + player.getName() + "§r. " + C("WordUse")
+                                    + " §b/plotme home §r" + C("MsgToGetToIt"));
                         }
+                        // Audible confirmation on successful claim.
+                        player.playSound("ENTITY_PLAYER_LEVELUP", 0.8f, 1.4f);
 
                         if (isAdvancedLogging()) {
                             if (price == 0) {

@@ -47,7 +47,7 @@ public class CmdDeny extends PlotCommand {
                 if ("*".equals(args[1])) {
                     denied = "*";
                 } else if (deniedPlayer == null) {
-                    player.sendMessage(args[1] + " was not found. Are they online?");
+                    player.sendMessage("§b" + args[1] + "§c was not found. Are they online?");
                     return true;
                 } else {
                     denied = deniedPlayer.getUniqueId().toString();
@@ -78,7 +78,7 @@ public class CmdDeny extends PlotCommand {
                                 EconomyResponse er = serverBridge.withdrawPlayer(player, price);
 
                                 if (!er.transactionSuccess()) {
-                                    player.sendMessage(er.errorMessage);
+                                    player.sendMessage("§c" + er.errorMessage);
                                     plugin.getLogger().warning(er.errorMessage);
                                     return true;
                                 }
@@ -104,7 +104,7 @@ public class CmdDeny extends PlotCommand {
                                     }
                                     iPlayer.setLocation(manager.getPlotHome(plot.getId(), player.getWorld()));
                                 }
-                                player.sendMessage(denied + " " + C("NowDenied", "*"));
+                                player.sendMessage("§b" + denied + "§r " + C("NowDenied", "*"));
                             } else if (deniedPlayer.getWorld().equals(plot.getWorld())) {
                                 PlotId plotId = manager.getPlotId(deniedPlayer);
 
@@ -123,7 +123,7 @@ public class CmdDeny extends PlotCommand {
                         }
                     }
                 } else {
-                    player.sendMessage(C("MsgThisPlot") + "(" + plot.getId().getID() + ") " + C("MsgNotYoursNotAllowedDeny"));
+                    player.sendMessage(C("MsgThisPlot") + "§7(§b" + plot.getId().getID() + "§7) §r" + C("MsgNotYoursNotAllowedDeny"));
                 }
             } else {
                 player.sendMessage(C("NotPlotWorld"));

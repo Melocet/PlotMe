@@ -33,10 +33,10 @@ public class CmdLike extends PlotCommand {
                 if (plot.canPlayerLike(player.getUniqueId())) {
                     plot.addLike(1, player.getUniqueId());
                     plugin.getSqlManager().savePlot(plot);
-                    player.sendMessage(MessageFormat.format("Added like to plot {0}", plot.getId().getID()));
+                    player.sendMessage(MessageFormat.format("§aAdded like to plot §b{0}§r", plot.getId().getID()));
                 } else {
                     plot.removeLike(1, player.getUniqueId());
-                    player.sendMessage(MessageFormat.format("Removed like from plot {0}", plot.getId().getID()));
+                    player.sendMessage(MessageFormat.format("§eRemoved like from plot §b{0}§r", plot.getId().getID()));
                 }
             } else {
                 player.sendMessage(C("NotPlotWorld"));

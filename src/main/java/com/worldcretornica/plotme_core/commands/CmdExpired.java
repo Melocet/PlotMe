@@ -1,12 +1,12 @@
 package com.worldcretornica.plotme_core.commands;
 
-import com.google.common.collect.Lists;
 import com.worldcretornica.plotme_core.PermissionNames;
 import com.worldcretornica.plotme_core.Plot;
 import com.worldcretornica.plotme_core.PlotMapInfo;
 import com.worldcretornica.plotme_core.PlotMe_Core;
 import com.worldcretornica.plotme_core.api.ICommandSender;
 import com.worldcretornica.plotme_core.api.IPlayer;
+import com.worldcretornica.plotme_core.utils.ListPartition;
 
 import java.util.List;
 
@@ -31,14 +31,14 @@ public class CmdExpired extends PlotCommand {
                     if (args.length == 2) {
                         page = Integer.parseInt(args[1]);
                     }
-                    List<List<Plot>> partition = Lists.partition(plugin.getSqlManager().getExpiredPlots(player.getWorld()), 10);
+                    List<List<Plot>> partition = ListPartition.partition(plugin.getSqlManager().getExpiredPlots(player.getWorld()), 10);
                     if (partition.isEmpty()) {
                         player.sendMessage(C("MsgNoPlotExpired"));
                     } else {
                         player.sendMessage(C("MsgExpiredPlotsPage", page, partition.size()));
                         for (Plot plot : partition.get(page - 1)) {
                             assert plot.getExpiredDate() != null;
-                            player.sendMessage(plot.getId() + " -> " + plot.getOwner() + " @ " + plot.getExpiredDate().toString());
+                            player.sendMessage("§b" + plot.getId() + "§7 -> §f" + plot.getOwner() + "§7 @ §e" + plot.getExpiredDate().toString() + "§r");
                         }
                     }
                 } else {

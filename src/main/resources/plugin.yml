@@ -1,12 +1,12 @@
 name: PlotMe
 main: com.worldcretornica.plotme_core.bukkit.PlotMe_CorePlugin
 version: ${project.version}
-api-version: '1.21'
+api-version: '1.20'
 authors: [Melocet, ZachBora, MattBDev]
 website: https://github.com/Melocet/PlotMe-Core
 load: STARTUP
 loadbefore: [Multiverse-Core, MultiWorld]
-softdepend: [Vault, WorldEdit]
+softdepend: [Vault, WorldEdit, BlueMap, squaremap]
 description: Plot management + default plot-world generator (modernized for Paper 1.21+).
 commands:
     plotme:
@@ -16,7 +16,7 @@ commands:
 permissions:
     plotme.weanywhere:
       description: Players with this permission gain the ability to worldedit anywhere in a plotworld
-      default: true
+      default: op
     plotme.use:
       description: Gives default user commands
       children:
@@ -37,6 +37,9 @@ permissions:
         plotme.use.deny: true
         plotme.use.reset: true
         plotme.use.middle: true
+        plotme.use.menu: true
+        plotme.use.flag: true
+        plotme.use.merge: true
         plotme.limit.1: true
     plotme.admin:
       description: Gives default administrator commands
@@ -58,8 +61,12 @@ permissions:
         plotme.admin.buildanywhere: true
         plotme.admin.reload: true
         plotme.admin.middle: true
+        plotme.admin.flag: true
     plotme.unblock.*:
       description: Unblocks a certain item that was blocked in the config
+    plotme.use.menu:
+      description: Allows opening the /plotme menu chest GUI
+      default: true
     plotme.use.middle:
       description: Gives the middle command
     plotme.use.buy:
@@ -136,3 +143,20 @@ permissions:
       description: Gives the addtime command for any plots
     plotme.admin.expired:
       description: Gives the expired command
+    plotme.use.flag:
+      description: Allows plot owners to set per-plot flags on plots they own
+    plotme.admin.flag:
+      description: Allows setting per-plot flags on any plot
+    plotme.use.merge:
+      description: Allows the /plotme merge command on plots the player owns
+    plotme.merge.limit.*:
+      description: Allows merging unlimited plots into one cluster
+    plotme.merge.limit.4:
+      description: Allows merging up to 4 plots into one cluster (vanilla cap)
+      default: true
+    plotme.merge.limit.6:
+      description: Allows merging up to 6 plots into one cluster
+    plotme.merge.limit.9:
+      description: Allows merging up to 9 plots into one cluster
+    plotme.merge.limit.16:
+      description: Allows merging up to 16 plots into one cluster

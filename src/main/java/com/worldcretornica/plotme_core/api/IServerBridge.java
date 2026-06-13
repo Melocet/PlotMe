@@ -1,29 +1,27 @@
 package com.worldcretornica.plotme_core.api;
 
-import com.google.common.base.Optional;
 import com.worldcretornica.configuration.ConfigAccessor;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
+import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
+import org.bukkit.block.Biome;
 import org.bukkit.configuration.ConfigurationSection;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public abstract class IServerBridge {
 
     private final Logger logger;
-    private final List<String> biomes = Arrays.asList("Ocean", "Plains", "Desert", "Extreme Hills", "Forest", "Tiaga", "Forest", "Swampland", "River",
-            "Hell",
-            "The End",
-            "FrozenOcean", "FrozenRiver", "Ice Plains", "Ice Mountains", "MushroomIsland", "MushroomIslandShore", "Beach", "DesertHills",
-            "ForestHills", "TiagaHills", "Jungle", "JungleHills", "JungleEdge", "Deep Ocean", "Stone Beach", "Cold Beach",
-            "Birch Forest", "Birch Forest Hills", "Roofed Forest", "Cold Taiga", "Cold Taiga Hills", "Mega Taiga", "Mega Taiga Hills",
-            "Extreme Hills+", "Savanna", "Savanna Plateau", "Mesa", "Mesa Plateau F", "Mesa Plateau");
-    private boolean usingLwc;
 
 
     protected IServerBridge(Logger bridgeLogger) {
@@ -60,6 +58,12 @@ public abstract class IServerBridge {
 
     public abstract void setupHooks();
 
+    /**
+     * Refresh any platform-specific web-map markers (BlueMap, squaremap, etc).
+     * Default is a no-op so non-Bukkit platforms don't need to care.
+     */
+    public void refreshWebMapMarkers() {}
+
     public abstract Optional<Economy> getEconomy();
 
     /**
@@ -75,31 +79,44 @@ public abstract class IServerBridge {
 
     public abstract EconomyResponse depositPlayer(IOfflinePlayer currentBidder, double currentBid);
 
-    public boolean isUsingLwc() {
-        return usingLwc;
-    }
-
-    protected void setUsingLwc(boolean usingLwc) {
-        this.usingLwc = usingLwc;
-    }
-
     public abstract void runTaskAsynchronously(Runnable runnable);
 
     public abstract void runTaskLaterAsynchronously(Runnable runnable, long delay);
 
+    /**
+     * Resolve a user-typed biome name against the runtime registry.
+     * Accepts legacy forms ("PLAINS", "plains", "Birch Forest") and full
+     * namespaced keys ("minecraft:birch_forest"). Returns the canonical key
+     * path (e.g. "birch_forest") on success.
+     */
+    @SuppressWarnings("deprecation")
     public Optional<String> getBiome(String name) {
-        for (String biome : biomes) {
-            if (biome.equalsIgnoreCase(name)) {
-                return Optional.of(biome);
-            }
-        }
-        return Optional.absent();
+        if (name == null || name.isEmpty()) return Optional.empty();
+        String raw = name.trim().toLowerCase(Locale.ROOT).replace(' ', '_');
+        NamespacedKey key = raw.contains(":")
+                ? NamespacedKey.fromString(raw)
+                : NamespacedKey.minecraft(raw);
+        if (key == null) return Optional.empty();
+        Registry<Biome> reg = Bukkit.getRegistry(Biome.class);
+        if (reg == null) return Optional.empty();
+        Biome biome = reg.get(key);
+        return biome == null ? Optional.empty() : Optional.of(biome.getKey().getKey());
     }
 
     public abstract File getDataFolder();
 
+    /**
+     * All biome keys registered on the running server (post-1.13 names, no
+     * typos, no duplicates — pulled live from Paper's Biome registry).
+     */
+    @SuppressWarnings("deprecation")
     public List<String> getBiomes() {
-        return biomes;
+        Registry<Biome> reg = Bukkit.getRegistry(Biome.class);
+        if (reg == null) return List.of();
+        return StreamSupport.stream(reg.spliterator(), false)
+                .map(b -> b.getKey().getKey())
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     public abstract int runTask(Runnable task);
@@ -111,8 +128,6 @@ public abstract class IServerBridge {
      * @return all plotworlds on the server
      */
     public abstract Collection<IWorld> getWorlds();
-
-    //public abstract boolean createPlotWorld(String worldName, String generator, Map<String, String> args);
 
     public ConfigurationSection loadDefaultConfig(ConfigAccessor configFile, String world) {
         ConfigurationSection defaultWorld = getDefaultWorld();

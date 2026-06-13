@@ -20,7 +20,7 @@ public class CmdSetOwner extends PlotCommand {
     }
 
     public boolean execute(ICommandSender sender, String[] args) {
-        if (args.length < 2 && args.length >= 3) {
+        if (args.length < 2 || args.length >= 3) {
             sender.sendMessage(getUsage());
             return true;
         }
@@ -33,7 +33,7 @@ public class CmdSetOwner extends PlotCommand {
             PlotMapInfo pmi = manager.getMap(world);
             Plot plot = manager.getPlot(player);
             if (plot == null) {
-                player.sendMessage("Set Owner only works on claimed plots");
+                player.sendMessage("§cSet Owner only works on claimed plots");
                 return true;
             }
             IPlayer newOwner = serverBridge.getPlayer(args[1]);
@@ -54,10 +54,10 @@ public class CmdSetOwner extends PlotCommand {
                     plot.setOwnerId(newOwner.getUniqueId());
                     plugin.getSqlManager().savePlot(plot);
                     manager.setOwnerSign(plot);
-                    player.sendMessage(C("MsgOwnerChangedTo") + " " + newOwner);
+                    player.sendMessage(C("MsgOwnerChangedTo") + " §b" + newOwner + "§r");
                 }
             } else {
-                player.sendMessage("This person already owns this plot!"); //TODO add caption for this
+                player.sendMessage("§cThis person already owns this plot!"); //TODO add caption for this
             }
             return true;
         } else {

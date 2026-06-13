@@ -38,16 +38,16 @@ public class CmdReset extends PlotCommand {
                     if (!event.isCancelled()) {
                         manager.clear(plot, player, ClearReason.Reset);
                         if (manager.deletePlot(plot)) {
-                            sender.sendMessage("Plot Reset");
+                            sender.sendMessage("§aPlot Reset");
                         } else {
-                            player.sendMessage("Plot was not reset? Something stopped this command.");
+                            player.sendMessage("§cPlot was not reset? Something stopped this command.");
                         }
                         if (isAdvancedLogging()) {
                             serverBridge.getLogger().info(C("MsgResetPlot", player.getName(), plot.getId().getID()));
                         }
                     }
                 } else {
-                    player.sendMessage(C("MsgThisPlot") + "(" + plot.getId().toString() + ") " + C("MsgNotYoursNotAllowedReset"));
+                    player.sendMessage(C("MsgThisPlot") + "§7(§b" + plot.getId().toString() + "§7) §r" + C("MsgNotYoursNotAllowedReset"));
                 }
             } else {
                 player.sendMessage(C("NotPlotWorld"));

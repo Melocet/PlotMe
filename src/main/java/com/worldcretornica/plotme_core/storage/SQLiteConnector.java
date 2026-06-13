@@ -100,6 +100,18 @@ public class SQLiteConnector extends Database {
                     + "`propertyValue` VARCHAR(255) DEFAULT NULL"
                     + ");");
             connection.commit();
+            // Plot merges. Additive table; rows are (plot_id, neighbour x,
+            // neighbour z) within the same world. Both sides of the merge
+            // get a row, so loading is a single-key lookup per plot.
+            statement.executeUpdate("CREATE TABLE IF NOT EXISTS `plotmecore_merged` ("
+                    + "`id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,"
+                    + "`plot_id` INTEGER NOT NULL,"
+                    + "`mergedX` INTEGER NOT NULL,"
+                    + "`mergedZ` INTEGER NOT NULL"
+                    + ");");
+            statement.executeUpdate(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS `merged_link` ON plotmecore_merged(plot_id, mergedX, mergedZ);");
+            connection.commit();
             statement.executeUpdate("CREATE TABLE IF NOT EXISTS `plotmecore_nextid` (`nextId` INTEGER NOT NULL DEFAULT '0');");
             connection.commit();
             try (ResultSet results = statement.executeQuery("SELECT * FROM plotmecore_nextid;")) {

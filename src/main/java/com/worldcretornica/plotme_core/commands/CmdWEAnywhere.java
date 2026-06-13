@@ -22,6 +22,9 @@ public class CmdWEAnywhere extends PlotCommand {
         }
 
         IPlayer player = (IPlayer) sender;
+        if (!player.hasPermission("plotme.admin")) {
+            return false;
+        }
         if (player.hasPermission(PermissionNames.ADMIN_WEANYWHERE)) {
             boolean defaultWEAnywhere = plugin.getConfig().getBoolean("defaultWEAnywhere");
             boolean playerIgnoringWELimit = manager.isPlayerIgnoringWELimit(player);
@@ -36,7 +39,7 @@ public class CmdWEAnywhere extends PlotCommand {
                     plugin.getLogger().info(player.getName() + "enabled WorldEdit Anywhere");
                 }
             } else {
-                player.sendMessage("You can now worldedit in only your plots.");
+                player.sendMessage("§eYou can now worldedit in only your plots.");
                 if (isAdvancedLogging()) {
                     plugin.getLogger().info(player.getName() + "disabled WorldEdit Anywhere");
                 }
