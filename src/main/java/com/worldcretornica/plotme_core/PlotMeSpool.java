@@ -20,7 +20,7 @@ import java.util.ArrayDeque;
  *    still drain even if their estimate is huge.
  *  - Progression stays deterministic and pause-safe: when the budget
  *    runs out we just return and the next tick picks up where we left
- *    off — no per-tick reordering, no partial chunk state.
+ *    off, no per-tick reordering, no partial chunk state.
  */
 public class PlotMeSpool implements Runnable {
 
@@ -34,7 +34,7 @@ public class PlotMeSpool implements Runnable {
      */
     private static final int MAX_BLOCKS_PER_TICK = 4096 * 16;
 
-    /** Hard time cap — if a chunk turns out to be expensive we bail early. */
+    /** Hard time cap: if a chunk turns out to be expensive we bail early. */
     private static final long MAX_NANOS_PER_TICK = 25_000_000L; // 25 ms
 
     private final PlotMe_Core plugin;
@@ -72,7 +72,7 @@ public class PlotMeSpool implements Runnable {
             }
 
             if (first.chunkqueue.isEmpty()) {
-                // This plot is done — finalize it and move on.
+                // This plot is done: finalize it and move on.
                 IPlotMe_GeneratorManager genmanager =
                         PlotMeCoreManager.getInstance().getGenManager(first.getPlot().getWorld());
                 if (first.getReason().equals(ClearReason.Clear)) {
@@ -87,7 +87,7 @@ public class PlotMeSpool implements Runnable {
                             + first.getPlot().getId().getID() + " "
                             + plugin.C("WordCleared"));
                 }
-                // Continue the loop — there may be another queued plot
+                // Continue the loop, there may be another queued plot
                 // and we may still have budget left.
                 continue;
             }

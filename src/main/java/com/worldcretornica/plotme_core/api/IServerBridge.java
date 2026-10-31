@@ -107,7 +107,7 @@ public abstract class IServerBridge {
 
     /**
      * All biome keys registered on the running server (post-1.13 names, no
-     * typos, no duplicates — pulled live from Paper's Biome registry).
+     * typos, no duplicates, pulled live from Paper's Biome registry).
      */
     @SuppressWarnings("deprecation")
     public List<String> getBiomes() {

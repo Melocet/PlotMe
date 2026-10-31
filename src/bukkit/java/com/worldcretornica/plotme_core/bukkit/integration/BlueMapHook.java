@@ -8,7 +8,7 @@ import java.util.logging.Logger;
 
 /**
  * Thin facade for the BlueMap marker hook. References no BlueMap-API types
- * directly — all real work lives in {@link BlueMapImpl}, which is only
+ * directly: all real work lives in {@link BlueMapImpl}, which is only
  * referenced (and thus only loaded by the JVM) when BlueMap is actually
  * enabled. This keeps PlotMe loadable on servers that don't ship BlueMap.
  */
@@ -51,7 +51,7 @@ public class BlueMapHook implements WebMapHook {
 
     /**
      * Parses the configured hex into a plain RGB int. Returns the default
-     * orange (0xFFA500) on any parse failure. Pure primitive — does NOT
+     * orange (0xFFA500) on any parse failure. Pure primitive: does NOT
      * touch any BlueMap-API class, so this stays safe to call when BlueMap
      * is missing from the server.
      */

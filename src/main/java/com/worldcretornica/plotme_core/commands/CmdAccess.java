@@ -9,7 +9,7 @@ import com.worldcretornica.plotme_core.api.IPlayer;
 import com.worldcretornica.plotme_core.api.IWorld;
 
 /**
- * {@code /plotme access <player> <level>} — assigns a fine-grained
+ * {@code /plotme access <player> <level>}: assigns a fine-grained
  * {@link AccessLevel} to a player on the current plot.
  *
  * <p>Complement to {@link CmdAdd} and {@link CmdTrust}, which remain as shorthands

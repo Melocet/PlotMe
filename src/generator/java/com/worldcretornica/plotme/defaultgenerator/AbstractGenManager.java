@@ -23,7 +23,7 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * Common helpers for plot-generator managers — boilerplate plotsize math,
+ * Common helpers for plot-generator managers: boilerplate plotsize math,
  * entity clearing, plot-id math, biome change. Inlined from the old
  * com.worldcretornica.plotme_abstractgenerator.BukkitAbstractGenManager
  * since the abstractgenerator project is dead upstream.
@@ -171,7 +171,7 @@ public abstract class AbstractGenManager implements IPlotMe_GeneratorManager {
 
     @Override
     public boolean movePlot(PlotId idFrom, PlotId idTo) {
-        return false; // optional feature — not implemented in the merged port
+        return false; // optional feature, not implemented in the merged port
     }
 
     @Override
@@ -192,11 +192,11 @@ public abstract class AbstractGenManager implements IPlotMe_GeneratorManager {
         int minY = w.getMinHeight();
         int maxY = w.getMaxHeight() - 1;
 
-        // Minecraft stores biomes per 4x4x4 cell — stepping by 1 hits the same
+        // Minecraft stores biomes per 4x4x4 cell, stepping by 1 hits the same
         // cell 64 times. Step by 4 on every axis, but clamp the final iteration
         // to the inclusive boundary so the upper edge of the plot isn't left
         // on the old biome when (maxX - minX) is not a multiple of 4 (which
-        // happens with the default 32-block plot size — 31 wide span, last
+        // happens with the default 32-block plot size: 31 wide span, last
         // strip starts at offset 28 and would skip the column at offset 31).
         Set<Long> chunks = new HashSet<>();
         for (int x = minX; x <= maxX; ) {

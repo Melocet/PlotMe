@@ -83,7 +83,7 @@ public abstract class Database {
         try {
             return LocalDate.parse(raw);
         } catch (DateTimeParseException firstAttempt) {
-            // Legacy DATETIME rows look like "yyyy-MM-dd HH:mm:ss[.fffffffff]" — strip the
+            // Legacy DATETIME rows look like "yyyy-MM-dd HH:mm:ss[.fffffffff]", strip the
             // time component and try again before giving up.
             if (raw.length() >= 10) {
                 try {
@@ -467,7 +467,7 @@ public abstract class Database {
                                     new Plot(internalID, owner, ownerId, world, biome, expiredDate, allowed, denied,
                                             likers, id, price, forSale, finished, finishedDate, protect, metadata, plotLikes, plotName, topLoc,
                                             bottomLoc, createdDate);
-                            // Merged-with links. The table is additive — older databases
+                            // Merged-with links. The table is additive, older databases
                             // simply won't have any rows here yet, so a missing table is
                             // tolerated by swallowing the SQLException (createTables runs
                             // every connect, so the table will exist after one boot).

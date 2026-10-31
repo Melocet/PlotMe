@@ -89,7 +89,7 @@ public class CmdBiome extends PlotCommand {
                             // the player can see the change actually covered
                             // the whole plot (and the entire merged cluster
                             // when applicable), not just where they were
-                            // standing — that was the bug this caption was
+                            // standing: that was the bug this caption was
                             // introduced to make visible.
                             player.sendMessage(C("MsgBiomeApplied", biome.get(), String.valueOf(blocks)));
 

@@ -55,7 +55,7 @@ public class PlotMeCoreManager {
     /**
      * Pre-dispose hook for a plot that may be part of a merged cluster.
      *
-     * For an UN-merged plot this is a no-op — the caller will then run the
+     * For an UN-merged plot this is a no-op, the caller will then run the
      * usual {@link #deletePlot(Plot)} and the geometry stays untouched.
      *
      * For a member of a merged cluster, this:
@@ -70,7 +70,7 @@ public class PlotMeCoreManager {
      *      to put back the original unclaimed road strip and removes the
      *      bidirectional link from both Plot objects' mergedWith sets.
      *      Marks each neighbour dirty so the merged-rows table is rewritten
-     *      on the next async flush — this is what makes the dispose survive
+     *      on the next async flush, this is what makes the dispose survive
      *      a /restart.
      *   4. Repaints the perimeter wall of every remaining cluster member
      *      ({@code adjustWall(p, true)}) so the rows that were previously
@@ -83,7 +83,7 @@ public class PlotMeCoreManager {
      *      component's outermost-NW gets its own sign.
      *
      * Caller is expected to invoke {@link #deletePlot(Plot)} AFTER this
-     * method — the disposed plot's own row goes away in that step.
+     * method, the disposed plot's own row goes away in that step.
      *
      * @param disposed the plot being disposed; must not be null
      */
@@ -103,7 +103,7 @@ public class PlotMeCoreManager {
         // mergedWith is a live set, so we copy it.
         java.util.Set<PlotId> neighbourIds = new java.util.LinkedHashSet<>(disposed.getMergedWith());
         if (neighbourIds.isEmpty()) {
-            return; // un-merged plot — no road rebuild needed
+            return; // un-merged plot, no road rebuild needed
         }
         // Resolve neighbour Plot objects up-front (some may be null if the
         // SQL cache lost them; we filter those out for the rebuild loops but
@@ -144,7 +144,7 @@ public class PlotMeCoreManager {
         // mergedWith may contain DIAGONAL links too (mergePlots installs
         // them in its 2x2 sweep so getMergedCluster sees one connected
         // component even when the player merged in an L-shape). Diagonals
-        // have no fillRoad-built strip between them — the geometry that
+        // have no fillRoad-built strip between them, the geometry that
         // joined them was the centre intersection, which step 1 already
         // restored. So only rebuildRoad on the four cardinal neighbours
         // (Manhattan distance == 1); diagonals are unlink-only.
@@ -167,7 +167,7 @@ public class PlotMeCoreManager {
 
         // --- Step 3: repaint the perimeter walls of every remaining
         // cluster member. The internal-edge skip flags inside adjustPlotFor
-        // look at the live mergedWith set, which we just trimmed — so the
+        // look at the live mergedWith set, which we just trimmed, so the
         // previously-skipped edges (where the disposed plot used to be the
         // merged partner) will now repaint as claimed walls.
         java.util.Set<Plot> repainted = new java.util.LinkedHashSet<>();
@@ -207,7 +207,7 @@ public class PlotMeCoreManager {
      * the pre-dispose cluster containing {@code disposed}. We test this by
      * checking that the three OTHER corners (i.e., the ones that aren't the
      * disposed plot itself) all still hold a mergedWith link to the disposed
-     * plot — which is the condition that drives fillCenterIntersection at
+     * plot, which is the condition that drives fillCenterIntersection at
      * merge time (see {@link #mergePlots(Plot, Plot)}).
      *
      * Returns false if any corner Plot is missing from the SQL cache or if
@@ -222,8 +222,8 @@ public class PlotMeCoreManager {
             return false;
         }
         // Every non-disposed corner must be linked to the disposed plot.
-        // (mergePlots also linkMergedPlots(p, se) and (ne, sw) — so the
-        // diagonal links are present too — but the direct edge-to-disposed
+        // (mergePlots also linkMergedPlots(p, se) and (ne, sw), so the
+        // diagonal links are present too, but the direct edge-to-disposed
         // link is the strongest single check.)
         PlotId d = disposed.getId();
         if (pNW != disposed && !pNW.isMergedWith(d)) return false;
@@ -240,7 +240,7 @@ public class PlotMeCoreManager {
      * with the plot id on line 1.
      *
      * For a member of a merged cluster, only the outermost NW member (lowest
-     * x, then lowest z) keeps a sign — its line 4 holds the comma-joined
+     * x, then lowest z) keeps a sign, its line 4 holds the comma-joined
      * cluster ids ("1;1,1;2,2;1,2;2") so a viewer can see which plots are
      * fused together. Every other member of the cluster gets its own sign
      * removed: otherwise every plot's per-plot NW sign would land in the
@@ -254,7 +254,7 @@ public class PlotMeCoreManager {
             setSingleOwnerSign(plot);
             return;
         }
-        // Merged: refresh the whole cluster — outermost NW gets the sign,
+        // Merged: refresh the whole cluster, outermost NW gets the sign,
         // everyone else gets theirs removed.
         refreshClusterOwnerSign(plot);
     }
@@ -291,7 +291,7 @@ public class PlotMeCoreManager {
             return;
         }
         if (cluster.size() == 1) {
-            // No real cluster — treat as single plot.
+            // No real cluster: treat as single plot.
             setSingleOwnerSign(anyMember);
             return;
         }
@@ -400,7 +400,7 @@ public class PlotMeCoreManager {
      * generator manager yet (e.g. /mv create just ran but our WorldInitEvent
      * hook hasn't fired, or the world was created with a non-PlotMe
      * generator). Callers reaching this branch should treat it as "not a
-     * plot world" — isPlotAvailable now short-circuits before calling us in
+     * plot world", isPlotAvailable now short-circuits before calling us in
      * that state.
      *
      * @param world
@@ -597,7 +597,7 @@ public class PlotMeCoreManager {
      *     display name, because the old name-based check broke on renames
      *     and case-mismatches;
      *   - call into the generator's road-fill helpers, which only take the
-     *     two plot ids (no world arg — they read it off their bound world).
+     *     two plot ids (no world arg: they read it off their bound world).
      *
      * Also persists the link by adding each adjacent neighbour to the
      * center's {@link Plot#getMergedWith()} set (and vice versa) and marking
@@ -725,7 +725,7 @@ public class PlotMeCoreManager {
      * the result and tell the user instead of indexing into the result.
      *
      * Previous implementation indexed [0] of the keySet array, throwing
-     * ArrayIndexOutOfBoundsException on empty servers — this surfaced
+     * ArrayIndexOutOfBoundsException on empty servers, this surfaced
      * whenever a player ran /plotme (no-args), which routes through
      * CmdShowHelp and reads the "first world" to print plot-limit info.
      *
@@ -942,7 +942,7 @@ public class PlotMeCoreManager {
         IPlotMe_GeneratorManager gm = getGenManager(plot.getWorld());
         String biome = plot.getBiome();
         int total = gm.setBiome(plot.getId(), biome);
-        // Apply to merged neighbours too AND the road strips between them —
+        // Apply to merged neighbours too AND the road strips between them:
         // when plots are merged the roads visually belong to the owner, so
         // biome must follow.
         java.util.Set<Plot> clusterPlots = getMergedCluster(plot);
@@ -1124,7 +1124,7 @@ public class PlotMeCoreManager {
      * Strategy when {@link #getPlotId(IPlayer)} returns null:
      *  - probe outward in +X / -X / +Z / -Z from the player's block position
      *    in growing steps until each direction either finds a plot id or
-     *    runs out of budget (capped at {@code plotSize} blocks — a road is
+     *    runs out of budget (capped at {@code plotSize} blocks: a road is
      *    always narrower than a plot);
      *  - collect the unique non-null neighbour ids;
      *  - if exactly two ids are found across one axis, treat it as a straight
@@ -1176,7 +1176,7 @@ public class PlotMeCoreManager {
         Vector base = loc.getVector();
         // Probe from the player's block-aligned position. internalgetPlotId
         // reads BlockX/BlockZ off the vector, and Vector.getBlockX uses
-        // Math.round (not floor) — passing the already-rounded coordinates
+        // Math.round (not floor), passing the already-rounded coordinates
         // avoids off-by-one when the player is mid-block.
         int baseX = base.getBlockX();
         int baseY = base.getBlockY();
@@ -1374,7 +1374,7 @@ public class PlotMeCoreManager {
             // All four must be in the same cluster (i.e. transitively
             // reachable from p). cluster came from getMergedCluster(a), and
             // a/b are now linked, but ne/sw/se may belong to a different
-            // pair-merge that hasn't been joined to a's cluster yet —
+            // pair-merge that hasn't been joined to a's cluster yet:
             // verify membership by checking the cluster set.
             if (!cluster.contains(ne) || !cluster.contains(sw) || !cluster.contains(se)) {
                 continue;

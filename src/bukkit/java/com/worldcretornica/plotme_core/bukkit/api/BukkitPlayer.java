@@ -48,7 +48,7 @@ public class BukkitPlayer extends BukkitOfflinePlayer implements IPlayer {
         try {
             player.playSound(player.getLocation(), soundName.toLowerCase().replace('_', '.'), volume, pitch);
         } catch (Throwable ignored) {
-            // Unknown sound key — silently skip rather than crash the command.
+            // Unknown sound key, silently skip rather than crash the command.
         }
     }
 
@@ -102,7 +102,7 @@ public class BukkitPlayer extends BukkitOfflinePlayer implements IPlayer {
 
     @Override
     public void remove() {
-        // Players cannot be removed via Entity#remove() in modern Paper — it
+        // Players cannot be removed via Entity#remove() in modern Paper, it
         // throws UnsupportedOperationException. Plot operations should never
         // be removing the player anyway, so this is intentionally a no-op.
     }

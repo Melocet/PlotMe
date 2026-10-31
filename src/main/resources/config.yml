@@ -29,7 +29,7 @@ mergeCost: 100.0
 
 # Master switch for the /plotme merge command. Set false to disable plot
 # merging entirely (the command will respond with a friendly message). Keeps
-# the rest of the plugin behaviour intact — only the merge feature is gated.
+# the rest of the plugin behaviour intact, only the merge feature is gated.
 merge-enabled: true
 
 # Maximum number of plots that can belong to one merged cluster.

@@ -202,7 +202,7 @@ public class PlotMe_Core {
             getServerBridge().loadDefaultConfig(configFile, "worlds.plotworld");
         }
         // Legacy "Version: 0.17.3" key was written here by old PlotMe. It is
-        // unused by any current code path — explicitly drop it on load so it
+        // unused by any current code path: explicitly drop it on load so it
         // disappears from saved configs.
         if (getConfig().contains("Version")) {
             getConfig().set("Version", null);

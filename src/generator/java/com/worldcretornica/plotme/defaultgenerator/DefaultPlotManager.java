@@ -149,7 +149,7 @@ public class DefaultPlotManager extends AbstractGenManager {
      * Clear the central path-width x path-width square where four roads meet
      * in a 2x2 merged cluster. {@link #fillRoad} only handles edge-to-edge
      * strips, and {@link #fillMiddleRoad} only fires when the 2x2 sits inside
-     * a 3x3 of same-owner plots — so when the player builds the cluster as
+     * a 3x3 of same-owner plots, so when the player builds the cluster as
      * four discrete pair-merges, the centre never gets touched and you end up
      * with an island of unclaimed-wall slabs around a sand floor in the
      * middle. This fills that square with the same y-layered treatment as
@@ -169,7 +169,7 @@ public class DefaultPlotManager extends AbstractGenManager {
         int minZ = topNW.getBlockZ() + 1;
         int maxZ = bottomSE.getBlockZ() - 1;
         if (minX > maxX || minZ > maxZ) {
-            return; // degenerate (no road between the plots — shouldn't happen)
+            return; // degenerate (no road between the plots, shouldn't happen)
         }
 
         int h = getGroundHeight();
@@ -244,8 +244,8 @@ public class DefaultPlotManager extends AbstractGenManager {
     }
 
     /**
-     * Geometric inverse of {@link #fillCenterIntersection(PlotId, PlotId, PlotId, PlotId)}
-     * — restores the path-width x path-width centre square of a 2x2 cluster
+     * Geometric inverse of {@link #fillCenterIntersection(PlotId, PlotId, PlotId, PlotId)}:
+     * restores the path-width x path-width centre square of a 2x2 cluster
      * back to its original road pattern.
      *
      * Within the centre square the original chunk generator places NO wall
@@ -275,7 +275,7 @@ public class DefaultPlotManager extends AbstractGenManager {
     /**
      * Paint an XZ region back to the original chunk-generator road pattern.
      * Mirrors {@link DefaultChunkGenerator#generateNoise} block-for-block at
-     * y == h and y == h+1, AIR above, FILL below — so a rebuilt strip is
+     * y == h and y == h+1, AIR above, FILL below, so a rebuilt strip is
      * indistinguishable from a freshly-generated road, including the
      * decorative ROAD_ALT inlays at 4-way intersections and the wall-slab
      * stripes at plot perimeters.
@@ -477,7 +477,7 @@ public class DefaultPlotManager extends AbstractGenManager {
     /**
      * Place a wall sign at {@code at}, facing {@code facing}, and write up to
      * four Adventure {@link Component} lines to its front face. Callers
-     * control styling — this method only does block placement and line
+     * control styling, this method only does block placement and line
      * assignment. Missing entries in {@code lines} (length &lt; 4 or null
      * elements) render as {@link Component#empty()} so the resulting sign NBT
      * stays clean.
@@ -572,7 +572,7 @@ public class DefaultPlotManager extends AbstractGenManager {
         // cluster? If the plot is merged with its N/S/E/W neighbour, the
         // shared wall strip was already cleared by fillRoad and re-painting
         // it here puts the old slabs back into the middle of the merged
-        // area — the bug the /plotme protect toggle was hitting. Skip those
+        // area, the bug the /plotme protect toggle was hitting. Skip those
         // sides; the cluster's outer perimeter still gets painted because
         // every other plot also skips its own internal edges and the outer
         // edges have no merged neighbour to mark them internal.

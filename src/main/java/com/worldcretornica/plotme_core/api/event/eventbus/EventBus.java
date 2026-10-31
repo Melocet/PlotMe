@@ -51,7 +51,7 @@ public class EventBus implements EventManager {
     /**
      * Walk the supertype graph of {@code rootType} and collect every class /
      * interface in it. Replaces the Guava {@code TypeToken.of(rootType).getTypes().rawTypes()}
-     * call. Order isn't significant — handlers are sorted by {@link Order} afterwards.
+     * call. Order isn't significant, handlers are sorted by {@link Order} afterwards.
      */
     private static Set<Class<?>> collectAllSupertypes(Class<?> rootType) {
         Set<Class<?>> visited = new LinkedHashSet<>();

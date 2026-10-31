@@ -50,7 +50,7 @@ public class BukkitEntity implements IEntity {
     @Override
     public void remove() {
         // Modern Paper rejects Entity#remove() on Players outright. Players
-        // never participate in plot-clear sweeps anyway — just no-op here.
+        // never participate in plot-clear sweeps anyway, just no-op here.
         if (entity instanceof org.bukkit.entity.Player) {
             return;
         }

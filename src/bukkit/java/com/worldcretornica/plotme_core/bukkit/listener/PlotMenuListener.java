@@ -54,7 +54,7 @@ public class PlotMenuListener implements Listener {
         }
         PlotMenuGui gui = (PlotMenuGui) holder;
         if (event.getClickedInventory() != top) {
-            // Clicks in the player's own inventory — block shift-move into menu.
+            // Clicks in the player's own inventory, block shift-move into menu.
             if (event.getClick() == ClickType.SHIFT_LEFT || event.getClick() == ClickType.SHIFT_RIGHT) {
                 event.setCancelled(true);
             }
@@ -124,7 +124,7 @@ public class PlotMenuListener implements Listener {
                         : "§7Type §f/plotme deny <name>§7 to deny.");
                 break;
             case PlotMenuGui.SLOT_BIOME:
-                // Open the biome page rather than printing a hint — players
+                // Open the biome page rather than printing a hint, players
                 // can now pick a biome from a curated icon list.
                 playClick(bukkitPlayer);
                 gui.showBiomePage(plot);
@@ -252,7 +252,7 @@ public class PlotMenuListener implements Listener {
      * same permission + ownership + economy gates, fires
      * {@link PlotBiomeChangeEvent}, persists the change, and sends the same
      * {@code BiomeChanged} caption the command flow sends. Any divergence
-     * here would cause the GUI and the command to produce different output —
+     * here would cause the GUI and the command to produce different output:
      * the spec explicitly forbids that.
      */
     private void applyBiome(Player bukkitPlayer, Plot plot, String biomeKey) {
@@ -272,7 +272,7 @@ public class PlotMenuListener implements Listener {
         PlotMapInfo pmi = mgr.getMap(world);
         IServerBridge bridge = api.getServerBridge();
 
-        // Same validation path the command uses — any biome unknown to the
+        // Same validation path the command uses, any biome unknown to the
         // running server's registry is rejected with the same caption.
         Optional<String> biome = bridge.getBiome(biomeKey);
         if (!biome.isPresent()) {
@@ -313,7 +313,7 @@ public class PlotMenuListener implements Listener {
         plot.setBiome(biome.get());
         int blocks = mgr.setBiome(plot);
         api.getSqlManager().savePlot(plot);
-        // Same caption the command path uses — the GUI and /plotme biome must
+        // Same caption the command path uses, the GUI and /plotme biome must
         // produce the same confirmation, including the block count, so the
         // player sees the change covered the whole plot (or full merged
         // cluster) and not just the cell under their feet.
@@ -341,7 +341,7 @@ public class PlotMenuListener implements Listener {
                     CLICK_SOUND.toLowerCase().replace('_', '.'),
                     CLICK_VOL, CLICK_PITCH);
         } catch (Throwable ignored) {
-            // Sound names vary across server forks/versions — never let an
+            // Sound names vary across server forks/versions, never let an
             // audio failure break the menu interaction.
         }
     }

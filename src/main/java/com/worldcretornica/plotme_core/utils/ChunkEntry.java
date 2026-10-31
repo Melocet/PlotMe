@@ -14,7 +14,7 @@ import org.bukkit.block.data.BlockData;
  * large plots don't lag a single tick. Per chunk we reset every block
  * inside the plot's interior to the generator's default pattern (fill
  * below the road, plot floor at road height, air above). Border blocks
- * — walls and neighbour-plot edges — are left untouched.
+ * (walls and neighbour-plot edges) are left untouched.
  *
  * Note: the original implementation called World#regenerateChunk and then
  * restored a snapshot of the border blocks. Paper 1.21 dropped support
@@ -104,7 +104,7 @@ public class ChunkEntry {
     }
 
     public void run() {
-        // Nothing of this chunk falls inside the plot interior — possible
+        // Nothing of this chunk falls inside the plot interior, possible
         // for plots whose bounding box only just clips the chunk.
         if (interiorMinX > interiorMaxX || interiorMinZ > interiorMaxZ) {
             return;

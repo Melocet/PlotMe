@@ -94,7 +94,7 @@ public class BukkitServerBridge extends IServerBridge {
         }
 
         // Web-map markers (BlueMap + squaremap). Each hook self-disables when
-        // its backing plugin is missing — no version checks needed here.
+        // its backing plugin is missing, no version checks needed here.
         webMapDispatcher = new WebMapDispatcher(plotMeCorePlugin.getAPI(), getLogger());
         if (webMapDispatcher.anyAvailable()) {
             plotMeCorePlugin.getAPI().getEventBus().register(webMapDispatcher);

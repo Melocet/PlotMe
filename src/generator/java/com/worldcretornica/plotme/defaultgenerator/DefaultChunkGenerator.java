@@ -17,7 +17,7 @@ import java.util.Random;
  * generateExtBlockSections(short[][]) API to Paper 1.21's
  * generateNoise(WorldInfo, Random, int, int, ChunkData).
  *
- * Layout: identical to the original — bedrock at y=0 of the chunk
+ * Layout: identical to the original, bedrock at y=0 of the chunk
  * (relative to the chunk min height), filling up to roadHeight-1,
  * road surface at roadHeight, walls at roadHeight+1. Plot interior
  * blocks (plotFloor) are stamped by DefaultContentPopulator so that

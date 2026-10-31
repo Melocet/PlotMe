@@ -478,7 +478,7 @@ public class Plot {
     }
 
     /**
-     * Link this plot with another. Does not mutate the other plot — callers
+     * Link this plot with another. Does not mutate the other plot, callers
      * that need a symmetric link must call {@code addMergedWith} on both
      * sides (the {@code PlotMeCoreManager#linkMergedPlots} helper does this
      * in one call).

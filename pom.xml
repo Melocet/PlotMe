@@ -10,7 +10,7 @@
     <packaging>jar</packaging>
 
     <name>PlotMe-Core</name>
-    <description>Plot management plugin — modernized fork for Paper 1.21+.</description>
+    <description>Plot management plugin: modernized fork for Paper 1.21+.</description>
 
     <properties>
         <java.version>21</java.version>
@@ -61,7 +61,7 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Vault (economy) — unchanged API. -->
+        <!-- Vault (economy), unchanged API. -->
         <dependency>
             <groupId>com.github.MilkBowl</groupId>
             <artifactId>VaultAPI</artifactId>
@@ -83,7 +83,7 @@
             <scope>compile</scope>
         </dependency>
 
-        <!-- BlueMap web-map API — softdep, never bundled. -->
+        <!-- BlueMap web-map API, softdep, never bundled. -->
         <dependency>
             <groupId>de.bluecolored.bluemap</groupId>
             <artifactId>BlueMapAPI</artifactId>
@@ -91,7 +91,7 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- squaremap web-map API — softdep, never bundled. -->
+        <!-- squaremap web-map API, softdep, never bundled. -->
         <dependency>
             <groupId>xyz.jpenilla</groupId>
             <artifactId>squaremap-api</artifactId>

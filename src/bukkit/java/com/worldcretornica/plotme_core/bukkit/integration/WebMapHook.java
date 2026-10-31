@@ -5,7 +5,7 @@ import com.worldcretornica.plotme_core.Plot;
 /**
  * Common contract for a web-map marker provider (BlueMap, squaremap, etc).
  *
- * <p>Implementations are softdeps — they check {@code isPluginEnabled(...)} at
+ * <p>Implementations are softdeps: they check {@code isPluginEnabled(...)} at
  * construction. If the backing plugin is missing, {@link #isAvailable()}
  * returns {@code false} and all methods are no-ops, so callers don't need to
  * branch.
@@ -28,6 +28,6 @@ public interface WebMapHook {
     /** Remove the marker for a single plot. */
     void removeMarker(Plot plot);
 
-    /** Wipe and re-add markers for every loaded plot — used on /plotme reload. */
+    /** Wipe and re-add markers for every loaded plot, used on /plotme reload. */
     void refreshAll();
 }

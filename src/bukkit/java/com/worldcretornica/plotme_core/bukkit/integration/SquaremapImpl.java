@@ -23,7 +23,7 @@ import java.util.logging.Logger;
 
 /**
  * Deferred implementation of the squaremap marker hook. Loaded only when
- * squaremap is present on the server — the {@link SquaremapHook} facade
+ * squaremap is present on the server, the {@link SquaremapHook} facade
  * gates {@code new SquaremapImpl(...)} behind a plugin-enabled check so the
  * JVM never resolves the squaremap API types when the plugin is absent.
  */

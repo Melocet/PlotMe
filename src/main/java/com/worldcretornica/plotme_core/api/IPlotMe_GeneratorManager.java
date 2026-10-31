@@ -24,7 +24,7 @@ public interface IPlotMe_GeneratorManager {
      * Clear the central path-width x path-width intersection where the four
      * roads meet between the 2x2 cluster {@code nw / ne / sw / se}. Without
      * this, a 2x2 merge done as four edge-to-edge pairs (which is how
-     * /plotme merge composes) leaves the center square as untouched road —
+     * /plotme merge composes) leaves the center square as untouched road:
      * unclaimed-wall slabs around a sand/dirt floor. Default implementation
      * is a no-op so non-default generators that don't carry the concept stay
      * source-compatible.
@@ -34,7 +34,7 @@ public interface IPlotMe_GeneratorManager {
     }
 
     /**
-     * Inverse of {@link #fillRoad(PlotId, PlotId)} — rebuilds the original
+     * Inverse of {@link #fillRoad(PlotId, PlotId)}: rebuilds the original
      * road strip between two adjacent plots that USED to be merged. Restores
      * the unclaimed-wall slabs along the outer edges (and along the boundary
      * facing each plot, so each plot regains its own perimeter wall), the
@@ -51,8 +51,8 @@ public interface IPlotMe_GeneratorManager {
     }
 
     /**
-     * Inverse of {@link #fillCenterIntersection(PlotId, PlotId, PlotId, PlotId)}
-     * — restores the path-width x path-width centre square between a 2x2
+     * Inverse of {@link #fillCenterIntersection(PlotId, PlotId, PlotId, PlotId)}:
+     * restores the path-width x path-width centre square between a 2x2
      * cluster to its original road pattern (unclaimed-wall slabs around the
      * four flanking road strips' corners, road floor at ground level). Called
      * by the dispose flow when removing a plot that was the 2x2 connector of
@@ -109,7 +109,7 @@ public interface IPlotMe_GeneratorManager {
      * (rectangular range from {@link #getPlotBottomLoc} to {@link #getPlotTopLoc},
      * inclusive on both ends). Returns the number of block columns touched so
      * callers can report a meaningful "N blocks" count to the player. A return
-     * of 0 means the biome key was unknown to the registry — the manager makes
+     * of 0 means the biome key was unknown to the registry, the manager makes
      * no changes in that case.
      */
     int setBiome(PlotId id, String biome);

@@ -32,13 +32,13 @@ import java.util.UUID;
  * stays valid across page swaps.
  *
  * MAIN slot layout (3-row inventory):
- *  4  PLAYER_HEAD  — owner skin + plot ID lore
- *  11 GRASS_BLOCK  — biome (click: opens BIOMES page)
- *  12 PAPER        — members (left: hint /plotme add, right: hint /plotme remove)
- *  13 REDSTONE     — denied (left: hint /plotme deny, right: hint /plotme undeny)
- *  14 LEVER        — toggle protect
- *  15 GOLD_INGOT   — toggle for-sale
- *  22 NETHER_STAR  — teleport home
+ *  4  PLAYER_HEAD  - owner skin + plot ID lore
+ *  11 GRASS_BLOCK  - biome (click: opens BIOMES page)
+ *  12 PAPER        - members (left: hint /plotme add, right: hint /plotme remove)
+ *  13 REDSTONE     - denied (left: hint /plotme deny, right: hint /plotme undeny)
+ *  14 LEVER        - toggle protect
+ *  15 GOLD_INGOT   - toggle for-sale
+ *  22 NETHER_STAR  - teleport home
  *
  * BIOMES slot layout: curated biome icons in slots 0-15 (up to 16 entries),
  * slot 22 BARRIER acts as a "Back" button to return to MAIN.
@@ -46,7 +46,7 @@ import java.util.UUID;
 public final class PlotMenuGui implements InventoryHolder {
 
     public static final String TITLE_PREFIX = "Plot: ";
-    public static final String TITLE_BIOME_SUFFIX = " — Biome";
+    public static final String TITLE_BIOME_SUFFIX = " - Biome";
     public static final int SIZE = 27;
 
     // MAIN-page slot constants (public so the listener can reference them
@@ -66,7 +66,7 @@ public final class PlotMenuGui implements InventoryHolder {
 
     /**
      * Pages the menu can show. The inventory instance is the same across
-     * pages — only the contents (and title) differ when we re-render.
+     * pages, only the contents (and title) differ when we re-render.
      */
     public enum Page {
         MAIN,

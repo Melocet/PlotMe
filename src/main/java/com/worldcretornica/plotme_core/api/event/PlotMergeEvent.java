@@ -12,7 +12,7 @@ import com.worldcretornica.plotme_core.api.IPlayer;
  * command consumed, and leaves the two plots independent.
  *
  * NOTE: this only fires for an interactive merge. Cross-plot building /
- * clearing semantics are not yet wired up — handlers that care about the
+ * clearing semantics are not yet wired up, handlers that care about the
  * resulting cluster should treat the link as informational for now.
  */
 public class PlotMergeEvent extends PlotEvent implements ICancellable, Event {

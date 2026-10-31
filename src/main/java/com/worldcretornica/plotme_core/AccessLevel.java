@@ -15,7 +15,7 @@ package com.worldcretornica.plotme_core;
  * <p>The ordinal of each constant matches the integer stored in the
  * {@code plotmecore_allowed.access} column when written through the new
  * {@code /plotme access} command flow. Reordering these constants would break
- * on-disk data — only append new constants.</p>
+ * on-disk data, only append new constants.</p>
  */
 public enum AccessLevel {
 

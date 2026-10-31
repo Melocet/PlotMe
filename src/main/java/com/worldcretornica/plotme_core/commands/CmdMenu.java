@@ -12,10 +12,10 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * /plotme menu — opens a chest GUI for the plot the player is standing on.
+ * /plotme menu: opens a chest GUI for the plot the player is standing on.
  * The actual GUI is Bukkit-only; this command lives in the platform-neutral
  * package because the dispatch table is wired up here, but it only fires for
- * Bukkit-backed players (which is the only platform in this fork — Sponge
+ * Bukkit-backed players (which is the only platform in this fork: Sponge
  * support has been dropped, see pom.xml).
  */
 public class CmdMenu extends PlotCommand {
@@ -72,7 +72,7 @@ public class CmdMenu extends PlotCommand {
         BukkitPlayer bp = (BukkitPlayer) player;
         PlotMenuGui gui = new PlotMenuGui(bp.getPlayer(), plot);
         bp.getPlayer().openInventory(gui.getInventory());
-        // The inventory's holder IS the PlotMenuGui — the click listener
+        // The inventory's holder IS the PlotMenuGui, the click listener
         // recovers it via InventoryHolder.
         return true;
     }

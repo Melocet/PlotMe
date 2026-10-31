@@ -6,7 +6,7 @@ WorldCretornica/PlotMe-Core, modernized for current Minecraft and merged
 with the (also abandoned) PlotMe-DefaultGenerator so the whole plot system
 ships as a single jar.
 
-Status: **v1.0.2** — Paper 1.21.4 / Java 21. See [Releases](https://github.com/Melocet/PlotMe/releases) for the full changelog.
+Status: **v1.0.2** (Paper 1.21.4 / Java 21). See [Releases](https://github.com/Melocet/PlotMe/releases) for the full changelog.
 
 Features
 --------
@@ -16,7 +16,7 @@ Features
 - Manual plot merging with configurable cluster cap + permission tiers
 - `/plotme dispose` restores the road grid with exact chunk-gen pattern parity
 - Per-plot flag system (`/plotme flag <name> [value]`)
-- Web-map markers for **BlueMap** and **squaremap** (facade pattern — both
+- Web-map markers for **BlueMap** and **squaremap** (facade pattern, both
   hooks auto-disable cleanly when the backing plugin isn't installed)
 - Colorized chat with `[PlotMe]` prefix; legacy plain-text mode via
   `use-legacy-texts: true`
@@ -25,11 +25,11 @@ Features
 
 Optional integrations (soft-deps)
 ---------------------------------
-- **Vault** — economy hooks for claim/sell/biome/etc. pricing
-- **WorldEdit 7** — WE-anywhere permission + per-plot edit restriction
-- **BlueMap** — plot markers on the BlueMap web frontend
-- **squaremap** — plot markers on the squaremap web frontend
-- **Multiverse-Core** — easy plot-world creation
+- **Vault**: economy hooks for claim/sell/biome/etc. pricing
+- **WorldEdit 7**: WE-anywhere permission + per-plot edit restriction
+- **BlueMap**: plot markers on the BlueMap web frontend
+- **squaremap**: plot markers on the squaremap web frontend
+- **Multiverse-Core**: easy plot-world creation
 
 Setup
 -----
@@ -54,13 +54,13 @@ Block keys in `worlds.<world>` accept either modern Material names
 
 Key config flags (`plugins/PlotMe/config.yml`)
 ----------------------------------------------
-- `use-legacy-texts: false` — when `true`, strips color codes and uses a plain
+- `use-legacy-texts: false`: when `true`, strips color codes and uses a plain
   `[PlotMe] ` chat prefix; when `false` (default) chat is colorized.
-- `merge-enabled: true` — master switch for `/plotme merge`.
-- `merge-max: 4` — max plots per cluster. Tiered permissions:
+- `merge-enabled: true`: master switch for `/plotme merge`.
+- `merge-max: 4`: max plots per cluster. Tiered permissions:
   `plotme.merge.limit.4 / 6 / 9 / 16 / *`.
-- `mergeCost: 100.0` — Vault price per merge when economy is enabled.
-- `webmap.bluemap` / `webmap.squaremap` — enable/disable web-map markers
+- `mergeCost: 100.0`: Vault price per merge when economy is enabled.
+- `webmap.bluemap` / `webmap.squaremap`: enable/disable web-map markers
   independently. `marker-color` is the hex RGB fill.
 
 License

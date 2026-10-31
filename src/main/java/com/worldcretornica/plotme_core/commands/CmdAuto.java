@@ -95,7 +95,7 @@ public class CmdAuto extends PlotCommand {
                                         plugin.getServerBridge().runTask(new Runnable() {
                                             @Override public void run() {
                                                 manager.createPlot(id, world, name, uuid, pmi);
-                                                // Teleport must run on the main thread — Paper rejects
+                                                // Teleport must run on the main thread, Paper rejects
                                                 // PlayerTeleportEvent from async scheduler workers.
                                                 // getPlotHome can now return null when the gen manager
                                                 // is unregistered between the spiral check and this

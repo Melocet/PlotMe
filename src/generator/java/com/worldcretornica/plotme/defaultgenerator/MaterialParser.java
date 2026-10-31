@@ -24,20 +24,20 @@ public final class MaterialParser {
     private static final Material FALLBACK = Material.STONE;
 
     /**
-     * Maps "<id>:<data>" — only the combinations used by the default
+     * Maps "<id>:<data>", only the combinations used by the default
      * PlotMe road/wall config are populated. Add more on demand.
      */
     private static final Map<String, Material> LEGACY = new HashMap<>();
 
     static {
-        // wall/slab variants — id 44 was the "stone double slab" group
+        // wall/slab variants: id 44 was the "stone double slab" group
         LEGACY.put("44",   Material.SMOOTH_STONE_SLAB);
         LEGACY.put("44:0", Material.SMOOTH_STONE_SLAB);
         LEGACY.put("44:1", Material.SANDSTONE_SLAB);
         LEGACY.put("44:4", Material.BRICK_SLAB);
         LEGACY.put("44:7", Material.QUARTZ_SLAB);
 
-        // road blocks — id 5 was wooden planks
+        // road blocks: id 5 was wooden planks
         LEGACY.put("5",   Material.OAK_PLANKS);
         LEGACY.put("5:0", Material.OAK_PLANKS);
         LEGACY.put("5:1", Material.SPRUCE_PLANKS);
@@ -46,10 +46,10 @@ public final class MaterialParser {
         LEGACY.put("5:4", Material.ACACIA_PLANKS);
         LEGACY.put("5:5", Material.DARK_OAK_PLANKS);
 
-        // plot floor — id 2 was grass block
+        // plot floor: id 2 was grass block
         LEGACY.put("2",   Material.GRASS_BLOCK);
 
-        // fill — id 3 was dirt
+        // fill: id 3 was dirt
         LEGACY.put("3",   Material.DIRT);
         LEGACY.put("3:1", Material.COARSE_DIRT);
         LEGACY.put("3:2", Material.PODZOL);

@@ -4,7 +4,7 @@ package com.worldcretornica.plotme.defaultgenerator;
  * Configuration keys for a single PlotMe world. Inlined from the old
  * com.worldcretornica.plotme_abstractgenerator project; defaults are
  * still expressed in legacy "<id>[:<data>]" form because real on-disk
- * configs use those — MaterialParser handles the translation.
+ * configs use those: MaterialParser handles the translation.
  */
 public enum DefaultWorldConfigPath {
 

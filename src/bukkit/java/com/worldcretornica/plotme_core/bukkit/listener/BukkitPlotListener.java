@@ -120,7 +120,7 @@ public class BukkitPlotListener implements Listener {
                         event.setCancelled(true);
                     }
                     if (plot.getExpiredDate() != null) {
-                        // Day-granularity is sufficient for expiry resets — skip the write
+                        // Day-granularity is sufficient for expiry resets, skip the write
                         // if today's reset would land on the same day already stored.
                         LocalDate expired = plot.getExpiredDate();
                         LocalDate target = LocalDate.now().plusDays(manager.getMap(player).getDaysToExpiration());
@@ -167,7 +167,7 @@ public class BukkitPlotListener implements Listener {
                         event.setCancelled(true);
                     }
                     if (plot.getExpiredDate() != null) {
-                        // Day-granularity is sufficient for expiry resets — skip the write
+                        // Day-granularity is sufficient for expiry resets, skip the write
                         // if today's reset would land on the same day already stored.
                         LocalDate expired = plot.getExpiredDate();
                         LocalDate target = LocalDate.now().plusDays(manager.getMap(player).getDaysToExpiration());

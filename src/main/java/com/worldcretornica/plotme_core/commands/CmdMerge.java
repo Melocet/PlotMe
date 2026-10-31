@@ -13,7 +13,7 @@ import com.worldcretornica.plotme_core.api.event.PlotMergeEvent;
 import net.milkbowl.vault.economy.EconomyResponse;
 
 /**
- * {@code /plotme merge <north|south|east|west>} — merges the plot the player
+ * {@code /plotme merge <north|south|east|west>}: merges the plot the player
  * is currently standing on with the adjacent plot in the requested cardinal
  * direction.
  *
@@ -27,7 +27,7 @@ import net.milkbowl.vault.economy.EconomyResponse;
  * On success: the road blocks between the two plots are replaced with floor
  * blocks (via the generator's {@code fillRoad}) and both plot rows record
  * each other in {@link Plot#getMergedWith()}. Cross-plot building / clearing
- * behaviour is intentionally not implemented yet — see PlotMergeEvent javadoc.
+ * behaviour is intentionally not implemented yet: see PlotMergeEvent javadoc.
  */
 public class CmdMerge extends PlotCommand {
 
@@ -50,7 +50,7 @@ public class CmdMerge extends PlotCommand {
         if (!player.hasPermission(PermissionNames.USER_MERGE)) {
             return false;
         }
-        // Master switch — admin can disable the merge feature server-wide.
+        // Master switch: admin can disable the merge feature server-wide.
         if (!plugin.getConfig().getBoolean("merge-enabled", true)) {
             player.sendMessage(C("MsgMergeDisabled"));
             return true;
